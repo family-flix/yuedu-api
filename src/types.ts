@@ -1,0 +1,148 @@
+import { BookSource } from ".";
+
+export interface IBookRes {
+  title: string;
+  author: string;
+  intro?: string;
+  cover?: string;
+  sources: ({
+    /**
+     * 书籍在该书源的 url
+     */
+    url: string;
+  } & IBookSourceRules)[];
+}
+
+/**
+ * 替换器
+ */
+export type IReplaceRules = [string, string][];
+/**
+ * 提取器
+ */
+export interface IContentExtract {
+  b?: IReplaceRules;
+  r: string;
+  a?: IReplaceRules;
+}
+
+/**
+ * 搜索结果
+ */
+export type ISearchResult = {
+  /**
+   * 书籍名称
+   */
+  title: string;
+  /**
+   * 书籍作者
+   */
+  author: string;
+  /**
+   * 书籍封面
+   */
+  cover?: string;
+  /**
+   * 书籍介绍
+   */
+  intro?: string;
+  /**
+   * 所有章节
+   */
+  chapters: {
+    /**
+     * 章节名称
+     */
+    title: string;
+    /**
+     * 章节书源
+     */
+    sources: {
+      /**
+       * 该章节在该书源的地址
+       */
+      url: string;
+    }[];
+  }[];
+  sources: {
+    /**
+     * 书源名称
+     */
+    name?: string;
+    /**
+     * 书源网站
+     */
+    host: string;
+    /**
+     * 书籍在该书源的地址
+     */
+    url: string;
+    /**
+     * 书源实例
+     */
+    $instance: BookSource;
+  }[];
+};
+
+/**
+ * 书籍信息提取规则
+ */
+export interface IBookSourceRules {
+  disabled?: boolean;
+  name?: string;
+  host: string;
+  search: string;
+  /**
+   * 提取规则
+   */
+  extract: {
+    /**
+     * 书籍详情
+     */
+    profile: {
+      title: IContentExtract;
+      author: IContentExtract;
+      intro: IContentExtract;
+      cover: IContentExtract;
+    };
+    /**
+     * 最近更新时间
+     */
+    latest_updated: IContentExtract;
+    /**
+     * 章列表
+     */
+    chapters: {
+      data_source: IContentExtract;
+      title: IContentExtract;
+      url: IContentExtract;
+    };
+    /**
+     * 章及正文
+     */
+    chapter: {
+      title?: IContentExtract;
+      content: IContentExtract;
+    };
+    /**
+     * 最新章节
+     */
+    latest_chapters: {
+      data_source: IContentExtract;
+      title: IContentExtract;
+      url: IContentExtract;
+      updated: IContentExtract;
+    };
+    /**
+     * 搜索
+     */
+    search: {
+      data_source: IContentExtract;
+      title: IContentExtract;
+      author: IContentExtract;
+      url: IContentExtract;
+      cover?: IContentExtract;
+      intro?: IContentExtract;
+    };
+  };
+}
