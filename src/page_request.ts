@@ -3,10 +3,15 @@ import puppeteer, { Browser } from "puppeteer";
 import { HtmlCache } from "./cache";
 
 const Cache = new HtmlCache();
+const iPhone = puppeteer.devices["iPhone 6"];
 let existingBrowser: null | Browser = null;
 
-export async function requestPage(url: string) {
+export async function requestPage(
+  url: string,
+  params: { mobile?: boolean; i?: [string, string, string?][] } = {}
+) {
   console.log("[LOG] Start request page");
+  const { mobile, i = [] } = params;
 
   const cache = await Cache.get(url);
   if (cache) {
@@ -19,7 +24,9 @@ export async function requestPage(url: string) {
   console.log("");
   if (existingBrowser === null) {
     existingBrowser = await puppeteer.launch({
-      headless: true,
+      executablePath:
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      headless: false,
       ignoreHTTPSErrors: true,
       args: [
         // "--no-sandbox",
@@ -30,19 +37,41 @@ export async function requestPage(url: string) {
     });
   }
   const page = await existingBrowser.newPage();
-  // page.on("request", (req) => {
-  //   if (["stylesheet", "font"].includes(req.resourceType())) {
-  //     req.abort();
-  //     return;
-  //   }
-  //   req.continue();
+  await page.setRequestInterception(true);
+  page.on("request", (request) => {
+    // const u = request.url();
+    const type = request.resourceType();
+    if (["stylesheet", "image", "font"].includes(type)) {
+      request.abort();
+      return;
+    }
+    request.continue();
+  });
+  // page.on("response", (response) => {
+  //   const u = response.url();
   // });
   await page.setUserAgent(
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36"
   );
+  if (mobile) {
+    await page.emulate(iPhone);
+  }
   const u = url.includes("http") ? url : `https:${url}`;
   await page.goto(u, {});
   console.log("[LOG] reach page");
+  // 执行交互
+  for (let ii = 0; ii < i.length; ii += 1) {
+    const [method, selector] = i[ii];
+    if (method === "click") {
+      // console.log("click page", selector);
+      await page.click(selector);
+    }
+    if (method === "waitForSelector") {
+      // console.log("waitForSelector page", selector);
+      await page.waitForSelector(selector);
+    }
+  }
+
   const html = await page.content();
   await page.close();
 

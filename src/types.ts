@@ -97,6 +97,10 @@ export interface IBookSourceRules {
    */
   extract: {
     /**
+     * 是否需要模拟为手机进行访问
+     */
+    mobile?: boolean;
+    /**
      * 书籍详情
      */
     profile: {
@@ -113,6 +117,13 @@ export interface IBookSourceRules {
      * 章列表
      */
     chapters: {
+      /**
+       * 该页面的交互
+       * 第一个字符串是行为，第二个是选择器
+       * ['click', '.btn']
+       * ['type', '.input', 'test']
+       */
+      i?: [string, string, string?][];
       data_source: IContentExtract;
       title: IContentExtract;
       url: IContentExtract;

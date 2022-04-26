@@ -35,6 +35,10 @@ export function m(content?: string) {
     // 前置清理
     const clean_content = replace<typeof content>(content)(regexp_str.b);
     // 内容提取
+    // console.log("[] before extract content");
+    // console.log(clean_content);
+    console.log(regexp_str.r);
+    console.log();
     const res = clean_content.match(r(regexp_str.r, modifies));
     let rrr: null | string[] | string = null;
     if (modifies?.includes("g")) {
