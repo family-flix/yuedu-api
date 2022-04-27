@@ -3,7 +3,7 @@
  */
 import { IBookSourceRules, ISearchResult } from "./types";
 import { requestPage } from "./page_request";
-import { findSource, m } from "./utils";
+import { m } from "./utils";
 
 export class BookSource {
   /**
@@ -68,7 +68,7 @@ export class BookSource {
           name,
           host,
           url,
-          $instance,
+          // $instance,
         });
       }
     }
@@ -79,11 +79,11 @@ export class BookSource {
    * 获取书籍详情
    */
   static async profile(result: ISearchResult) {
-    const { sources } = result;
-    for (let i = 0; i < sources.length; i += 1) {
-      const { url, $instance } = sources[i];
-      $instance.profile(url);
-    }
+    // const { sources } = result;
+    // for (let i = 0; i < sources.length; i += 1) {
+    //   const { url, $instance } = sources[i];
+    //   $instance.profile(url);
+    // }
   }
 
   /**

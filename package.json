@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "esbuild ./src/index.ts --outfile=dist/index.js --format=cjs --platform=node --bundle --external:puppeteer"
+    "build": "esbuild ./src/index.ts --outfile=dist/index.js --format=cjs --platform=node --bundle --external:puppeteer",
+    "start": "yarn build && node examples/server"
   },
   "keywords": [],
   "author": "",

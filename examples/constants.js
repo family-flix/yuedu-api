@@ -1,5 +1,6 @@
 module.exports.BOOK_SOURCES = [
   {
+    disabled: true,
     name: "起点",
     host: "https://m.qidian.com",
     search: "/soushu/{{key}}.html",
@@ -50,6 +51,24 @@ module.exports.BOOK_SOURCES = [
     host: "http://www.b5200.net",
     search: "/modules/article/search.php?searchkey={{key}}",
     extract: {
+      search: {
+        // 指定字符<tr> 后面跟着 任意字符(一个或更多) 再跟着 指定字符 </tr>
+        data_source: {
+          r: /<tr>[\s\S]{1,}?<\/tr>/.toString(),
+        },
+        // 指定字符 <td 后面跟着 任意字符(一个或更多) 再跟着 指定字符 /" 再跟着 任意字符(一个或更多) 再跟着 </a></td>
+        title: {
+          r: /<td[\s\S]{1,}\/">([\s\S]{1,}?)<\/a><\/td>/.toString(),
+        },
+        // 指定字符 <td class="odd"> 且后面非 < 再跟着 任意字符(一个或多个) 再跟着 指定字符 </td>
+        author: {
+          r: /<td class="odd">(?=[^<])([\s\S]{1,}?)<\/td>/.toString(),
+        },
+        // 指定字符 <td 后面跟着 任意字符(一个或更多) 再跟着 指定字符 href=" 再跟着 任意字符(一个或更多) 再跟着 非指定字符. 再跟着 指定字符 ">
+        url: {
+          r: /<td class="odd"><a href="([\s\S]{1,}?[^\.])">/.toString(),
+        },
+      },
       profile: {
         title: {
           r: /og:title" content="([\s\S]{1,}?)">/.toString(),
@@ -109,22 +128,99 @@ module.exports.BOOK_SOURCES = [
           r: /odd" align="center">([-0-9]{1,})<\/td>/.toString(),
         },
       },
+    },
+  },
+  {
+    name: "顶点小说",
+    host: "https://www.sbooktxt.com",
+    search: "/search.php?q={{key}}",
+    extract: {
       search: {
-        // 指定字符<tr> 后面跟着 任意字符(一个或更多) 再跟着 指定字符 </tr>
         data_source: {
-          r: /<tr>[\s\S]{1,}?<\/tr>/.toString(),
+          b: [[/\n/.toString(), ""]],
+          r: /<div class="result-item[\s\S]{1,}?<\/div>[ ]{0,}?<\/div>/.toString(),
         },
-        // 指定字符 <td 后面跟着 任意字符(一个或更多) 再跟着 指定字符 /" 再跟着 任意字符(一个或更多) 再跟着 </a></td>
         title: {
-          r: /<td[\s\S]{1,}\/">([\s\S]{1,}?)<\/a><\/td>/.toString(),
+          b: [
+            [/\n/.toString(), ""],
+            [/[ ]{2,}/.toString(), ""],
+          ],
+          r: /title="([^"]{1,}?)"/.toString(),
         },
-        // 指定字符 <td class="odd"> 且后面非 < 再跟着 任意字符(一个或多个) 再跟着 指定字符 </td>
         author: {
-          r: /<td class="odd">(?=[^<])([\s\S]{1,}?)<\/td>/.toString(),
+          r: /作者：[\s\S]{1,}?([\u4e00-\u9fa5]{1,})</.toString(),
         },
-        // 指定字符 <td 后面跟着 任意字符(一个或更多) 再跟着 指定字符 href=" 再跟着 任意字符(一个或更多) 再跟着 非指定字符. 再跟着 指定字符 ">
+        cover: {
+          r: /(https:\/\/www\.sbooktxt.com[^"]{1,})"/.toString(),
+        },
+        intro: {
+          r: /result-game-item-desc">([^<]{1,})<\//.toString(),
+        },
         url: {
-          r: /<td class="odd"><a href="([\s\S]{1,}?[^\.])">/.toString(),
+          r: /href="([^"]{1,}?)"/.toString(),
+          a: [[/^/.toString(), "https://www.sbooktxt.com"]],
+        },
+      },
+      profile: {
+        title: {
+          r: /og:title" content="([\s\S]{1,}?)">/.toString(),
+        },
+        author: {
+          r: /og:novel:author" content="([\s\S]{1,}?)">/.toString(),
+        },
+        intro: {
+          r: /og:description" content="([\s\S]{1,}?)">/.toString(),
+        },
+        cover: {
+          r: /og:image" content="([\s\S]{1,}?)">/.toString(),
+        },
+      },
+      latest_updated: {
+        r: /最近更新：[-0-9]{1,}?<\/p>/.toString(),
+      },
+      chapters: {
+        data_source: {
+          b: [[/(<dd>[\s\S]{1,}?<\/dd>){9}/.toString(), ""]],
+          r: /(<dd>([\s\S]{1,}?)<\/dd>)/.toString(),
+        },
+        title: {
+          r: /">([\s\S]{1,})<\/a>/.toString(),
+        },
+        url: {
+          // a12325654 a123879q 提取 a123，后面不能存在 q
+          r: /href="([^"]{1,}?)"/.toString(),
+          a: [[/^/.toString(), "https://www.sbooktxt.com"]],
+        },
+      },
+      chapter: {
+        title: {
+          r: /<h1>([^<]{1,})<\/h1>/.toString(),
+        },
+        content: {
+          b: [[/&nbsp;<\/div>/.toString(), ""]],
+          r: /id="content"([\s\S]{1,}?)<\/div>/.toString(),
+          a: [
+            [/<div[\s\S]{1,}<\/div>(?=(<p))/.toString(), ""],
+            [/&nbsp;/.toString(), ""],
+            [/\s/.toString(), ""],
+            [/<br>/.toString(), "\n"],
+            [/>/.toString(), ""],
+          ],
+        },
+      },
+      latest_chapters: {
+        data_source: {
+          b: [[/正文<\/dt>[\s\S]{0,}<dd>[\s\S]{1,}<\/dl>/.toString(), ""]],
+          r: /(<dd>([\s\S]{1,}?)<\/dd>)/.toString(),
+        },
+        title: {
+          r: /<td[\s\S]{1,}_blank">([\s\S]{1,}?)<\/a><\/td>/.toString(),
+        },
+        url: {
+          r: /<td class="even"><a href="([\s\S]{1,}?)" target="_blank">/.toString(),
+        },
+        updated: {
+          r: /odd" align="center">([-0-9]{1,})<\/td>/.toString(),
         },
       },
     },

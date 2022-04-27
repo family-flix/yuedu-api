@@ -80,7 +80,7 @@ export type ISearchResult = {
     /**
      * 书源实例
      */
-    $instance: BookSource;
+    // $instance: BookSource;
   }[];
 };
 

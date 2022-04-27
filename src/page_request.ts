@@ -5,6 +5,7 @@ import { HtmlCache } from "./cache";
 const Cache = new HtmlCache();
 const iPhone = puppeteer.devices["iPhone 6"];
 let existingBrowser: null | Browser = null;
+let destroy_browser_timer: NodeJS.Timeout | null = null;
 
 export async function requestPage(
   url: string,
@@ -12,6 +13,13 @@ export async function requestPage(
 ) {
   console.log("[LOG] Start request page");
   const { mobile, i = [] } = params;
+
+  if (destroy_browser_timer) {
+    clearTimeout(destroy_browser_timer);
+  }
+  destroy_browser_timer = setTimeout(() => {
+    destroy_browser();
+  }, 3 * 60 * 1000);
 
   const cache = await Cache.get(url);
   if (cache) {
@@ -24,9 +32,9 @@ export async function requestPage(
   console.log("");
   if (existingBrowser === null) {
     existingBrowser = await puppeteer.launch({
-      executablePath:
-        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-      headless: false,
+      // executablePath:
+      //   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      headless: true,
       ignoreHTTPSErrors: true,
       args: [
         // "--no-sandbox",
@@ -40,8 +48,12 @@ export async function requestPage(
   await page.setRequestInterception(true);
   page.on("request", (request) => {
     // const u = request.url();
+    // if (u.includes("cm.g.doubleclick.net")) {
+    //   request.abort();
+    //   return;
+    // }
     const type = request.resourceType();
-    if (["stylesheet", "image", "font"].includes(type)) {
+    if (["stylesheet", "font"].includes(type)) {
       request.abort();
       return;
     }
@@ -57,7 +69,9 @@ export async function requestPage(
     await page.emulate(iPhone);
   }
   const u = url.includes("http") ? url : `https:${url}`;
-  await page.goto(u, {});
+  await page.goto(u, {
+    waitUntil: "domcontentloaded",
+  });
   console.log("[LOG] reach page");
   // 执行交互
   for (let ii = 0; ii < i.length; ii += 1) {
@@ -83,5 +97,6 @@ export async function requestPage(
 export function destroy_browser() {
   if (existingBrowser) {
     existingBrowser.close();
+    existingBrowser = null;
   }
 }
