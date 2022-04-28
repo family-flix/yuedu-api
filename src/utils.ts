@@ -1,4 +1,9 @@
-import { IBookSourceRules, IContentExtract, IReplaceRules } from "./types";
+import {
+  IBookSourceRules,
+  IContentExtract,
+  IReplaceRules,
+  Result,
+} from "./types";
 
 export function getCapture(matched: RegExpMatchArray | null): string | null {
   if (matched === null) {
@@ -116,4 +121,21 @@ export function findSource(sources: IBookSourceRules[], url: string) {
     }
     return false;
   });
+}
+
+export function Ok<T>(value: T) {
+  return {
+    Ok(): T {
+      return value;
+    },
+    Err: () => null,
+  } as Result<T>;
+}
+export function Err<T extends string>(message: string | null) {
+  return {
+    Ok: () => null,
+    Err() {
+      return message;
+    },
+  } as Result<unknown>;
 }

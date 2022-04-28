@@ -1,5 +1,5 @@
 const core = require("../dist");
-const { BOOK_SOURCES } = require("./constants");
+const BOOK_SOURCES = require("./sources");
 
 (async () => {
   await core.BookSource.add_source(BOOK_SOURCES);

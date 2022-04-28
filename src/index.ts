@@ -1,9 +1,16 @@
 /**
  * @file 书源
  */
-import { IBookSourceRules, ISearchResult } from "./types";
+import {
+  IBookSourceRules,
+  ICache,
+  IPageRequestParams,
+  ISearchResult,
+  Result,
+} from "./types";
 import { requestPage } from "./page_request";
-import { m } from "./utils";
+import { m, Ok } from "./utils";
+import { HtmlCache } from "./cache";
 
 export class BookSource {
   /**
@@ -28,52 +35,52 @@ export class BookSource {
   /**
    * 聚合源搜索
    */
-  static async multi_search(keyword: string): Promise<ISearchResult[]> {
-    const sources = BookSource.loadSource();
-    console.log("[LOG] Multi_search", sources);
-    const requests = [];
-    for (let i = 0; i < sources.length; i += 1) {
-      const { name, host } = sources[i];
-      const $instance = new BookSource(sources[i]);
-      requests.push(
-        (async () => {
-          const results = await $instance.search(keyword);
-          return {
-            name,
-            host,
-            $instance,
-            results,
-          };
-        })()
-      );
-    }
-    const resps = await Promise.all(requests);
-    const books: Record<string, ISearchResult> = {};
-    for (let i = 0; i < resps.length; i += 1) {
-      const { name, host, results, $instance } = resps[i];
-      for (let j = 0; j < results.length; j += 1) {
-        const { title, author, url, cover, intro } = results[j];
-        const uid = title + author;
-        books[uid] = books[uid] || {
-          title,
-          author,
-          cover,
-          intro,
-          chapters: [],
-          sources: [],
-        };
-        books[uid].cover = books[uid].cover || cover;
-        books[uid].intro = books[uid].intro || intro;
-        books[uid].sources.push({
-          name,
-          host,
-          url,
-          // $instance,
-        });
-      }
-    }
-    return Object.values(books);
-  }
+  // static async multi_search(keyword: string): Promise<ISearchResult[]> {
+  //   const sources = BookSource.loadSource();
+  //   console.log("[LOG] Multi_search", sources);
+  //   const requests = [];
+  //   for (let i = 0; i < sources.length; i += 1) {
+  //     const { name, host } = sources[i];
+  //     const $instance = new BookSource(sources[i]);
+  //     requests.push(
+  //       (async () => {
+  //         const results = await $instance.search(keyword);
+  //         return {
+  //           name,
+  //           host,
+  //           $instance,
+  //           results,
+  //         };
+  //       })()
+  //     );
+  //   }
+  //   const resps = await Promise.all(requests);
+  //   const books: Record<string, ISearchResult> = {};
+  //   for (let i = 0; i < resps.length; i += 1) {
+  //     const { name, host, results } = resps[i];
+  //     for (let j = 0; j < results.length; j += 1) {
+  //       const { title, author, url, cover, intro } = results[j];
+  //       const uid = title + author;
+  //       books[uid] = books[uid] || {
+  //         title,
+  //         author,
+  //         cover,
+  //         intro,
+  //         chapters: [],
+  //         sources: [],
+  //       };
+  //       books[uid].cover = books[uid].cover || cover;
+  //       books[uid].intro = books[uid].intro || intro;
+  //       books[uid].sources.push({
+  //         name,
+  //         host,
+  //         url,
+  //         // $instance,
+  //       });
+  //     }
+  //   }
+  //   return Object.values(books);
+  // }
 
   /**
    * 获取书籍详情
@@ -87,66 +94,99 @@ export class BookSource {
   }
 
   /**
-   * 获取所有章节
+   * 使用指定源搜索
+   */
+  static async search(source: { host: string; keyword: string }): Promise<
+    Result<
+      {
+        title: string;
+        url: string;
+      }[]
+    >
+  > {
+    const { keyword, host } = source;
+    const s = BookSource.sources.find((s) => s.host === host)!;
+    const $instance = new BookSource(s);
+    const r = await $instance.search(keyword);
+    if (r.Err()) {
+      return r;
+    }
+    return Ok(r.Ok());
+  }
+
+  /**
+   * 根据指定源使用书籍 url 获取该书籍所有章节
    */
   static async chapters(source: {
     name?: string;
     host: string;
     url: string;
   }): Promise<
-    {
-      title: string;
-      url: string;
-    }[]
+    Result<
+      {
+        title: string;
+        url: string;
+      }[]
+    >
   > {
     const { url, host } = source;
     const s = BookSource.sources.find((s) => s.host === host)!;
     const $instance = new BookSource(s);
-    const chapters = await $instance.chapters(url);
-    return chapters;
+    const r = await $instance.chapters(url);
+    if (r.Err()) {
+      return r;
+    }
+    return Ok(r.Ok());
   }
 
   /**
    * 从多个源获取所有章节
    */
-  static async chapters_with_multi_sources(
-    sources: {
-      name?: string;
-      host: string;
-      url: string;
-    }[]
-  ): Promise<
-    {
-      title: string;
-      sources: {
-        url: string;
-        name?: string;
-        host: string;
-      }[];
-    }[]
-  > {
-    const chaptersMap: Record<string, any> = {};
-    for (let i = 0; i < sources.length; i += 1) {
-      const { name, url, host } = sources[i];
-      const source = BookSource.sources.find((s) => s.host === host)!;
-      const $instance = new BookSource(source);
-      const chapters = await $instance.chapters(url);
-      // console.log("fetch ", url, source, chapters);
-      for (let i = 0; i < chapters.length; i += 1) {
-        const { title, url } = chapters[i];
-        chaptersMap[title] = chaptersMap[title] || {
-          title,
-          sources: [],
-        };
-        chaptersMap[title].sources.push({
-          name,
-          host,
-          url,
-        });
-      }
-    }
-    return Object.values(chaptersMap);
-  }
+  // static async chapters_with_multi_sources(
+  //   sources: {
+  //     name?: string;
+  //     host: string;
+  //     url: string;
+  //   }[]
+  // ): Promise<
+  //   Result<
+  //     {
+  //       title: string;
+  //       sources: {
+  //         url: string;
+  //         name?: string;
+  //         host: string;
+  //       }[];
+  //     }[]
+  //   >
+  // > {
+  //   const chaptersMap: Record<string, any> = {};
+  //   for (let i = 0; i < sources.length; i += 1) {
+  //     const { name, url, host } = sources[i];
+  //     const source = BookSource.sources.find((s) => s.host === host)!;
+  //     const $instance = new BookSource(source);
+  //     const r = await $instance.chapters(url);
+  //     if (r.Err()) {
+  //       continue;
+  //     }
+  //     const chapters = r.Ok();
+  //     // console.log("fetch ", url, source, chapters);
+  //     for (let i = 0; i < chapters.length; i += 1) {
+  //       const { title, url } = chapters[i];
+  //       chaptersMap[title] = chaptersMap[title] || {
+  //         title,
+  //         sources: [],
+  //       };
+  //       chaptersMap[title].sources.push({
+  //         name,
+  //         host,
+  //         url,
+  //       });
+  //     }
+  //   }
+  //   const result = Object.values(chaptersMap);
+  //   return Ok(result);
+  // }
 
   /**
    * 获取指定章节
@@ -155,11 +195,15 @@ export class BookSource {
     const { host, url } = chapter;
     const s = BookSource.sources.find((so) => so.host === host)!;
     const $instance = new BookSource(s);
-    const { title, content } = await $instance.chapter(url);
-    return {
+    const r = await $instance.chapter(url);
+    if (r.Err()) {
+      return r;
+    }
+    const { title, content } = r.Ok();
+    return Ok({
       title,
       content,
-    };
+    });
   }
 
   /**
@@ -178,13 +222,34 @@ export class BookSource {
    * 解析规则
    */
   private extract: IBookSourceRules["extract"];
+  /**
+   * 缓存
+   */
+  private cache: null | ICache;
+  /**
+   * 页面请求器
+   * @param params
+   * @param Cache
+   */
+  request: (params: IPageRequestParams) => Promise<Result<any>>;
+  /**
+   *
+   * @param params
+   * @param Cache
+   */
+  destroy: () => void;
 
-  constructor(params: IBookSourceRules) {
+  constructor(params: IBookSourceRules, Cache: ICache = new HtmlCache()) {
     const { name, host, search, extract } = params;
     this.name = name;
     this.host = host;
     this.search_pathname = search;
     this.extract = extract;
+    this.cache = Cache;
+
+    const { request, destroy } = requestPage(Cache);
+    this.request = request;
+    this.destroy = destroy;
   }
 
   /**
@@ -196,13 +261,23 @@ export class BookSource {
     const { host, search_pathname, extract } = this;
     const url =
       host + encodeURI(search_pathname.replace(/\{\{key\}\}/, keyword));
-    const html = await requestPage(url);
+    const r = await this.request({
+      url,
+      host,
+      cache_key: search_pathname.match(/\{\{key\}\}/) ? undefined : keyword,
+      i: extract.search.i,
+      kw: keyword,
+    });
+    if (r.Err()) {
+      return r;
+    }
+    const html = r.Ok();
     const dataSource = m(html)(extract.search.data_source, "g");
     console.log("[LOG] Search result is: ", dataSource?.length);
     console.log();
 
     if (dataSource === null) {
-      return [];
+      return Ok([]);
     }
     const result = [];
     for (let i = 0; i < dataSource.length; i += 1) {
@@ -217,7 +292,7 @@ export class BookSource {
       });
     }
 
-    return result;
+    return Ok(result);
   }
 
   /**
@@ -225,30 +300,39 @@ export class BookSource {
    */
   async profile(url: string) {
     const { profile } = this.extract;
-    const html = await requestPage(url);
+    const r = await this.request({ url });
+    if (r.Err()) {
+      return r;
+    }
+    const html = r.Ok();
     const mm = m(html);
-    return {
+    return Ok({
       title: mm(profile.title),
       author: mm(profile.author),
       intro: mm(profile.intro),
       cover: mm(profile.cover),
       chapters: await this.chapters(url),
-    };
+    });
   }
   /**
    * 获取所有章节
    */
   async chapters(url: string) {
     const { mobile, chapters } = this.extract;
-    const html = await requestPage(url, {
+    const r = await this.request({
+      url,
       mobile,
       i: chapters.i,
     });
+    if (r.Err()) {
+      return r;
+    }
+    const html = r.Ok();
     console.log("[LOG] Get chapters");
     const mm = m(html);
     const data_source = mm(chapters.data_source, "g");
     if (!data_source) {
-      return [];
+      return Ok([]);
     }
     const results = [];
     for (let i = 0; i < data_source.length; i += 1) {
@@ -259,18 +343,22 @@ export class BookSource {
         url: mmm(chapters.url) as string,
       });
     }
-    return results;
+    return Ok(results);
   }
   /**
    * 获取书籍最新章节
    */
   async latest_chapters(url: string) {
     const { chapters } = this.extract;
-    const html = await requestPage(url);
+    const r = await this.request({ url });
+    if (r.Err()) {
+      return r;
+    }
+    const html = r.Ok();
     const mm = m(html);
     const data_source = mm(chapters.data_source, "g");
     if (!data_source) {
-      return [];
+      return Ok([]);
     }
     const results = [];
     for (let i = 0; i < data_source.length; i += 1) {
@@ -281,26 +369,34 @@ export class BookSource {
         url: mmm(chapters.url),
       });
     }
-    return results;
+    return Ok(results);
   }
   /**
    * 获取最近更新时间
    */
   async latest_updated(url: string) {
     const { latest_updated } = this.extract;
-    const html = await requestPage(url);
-    return m(html)(latest_updated);
+    const r = await this.request({ url });
+    if (r.Err()) {
+      return r;
+    }
+    const html = r.Ok();
+    return Ok(m(html)(latest_updated));
   }
   /**
    * 获取指定章节内容
    */
   async chapter(url: string) {
     const { chapter } = this.extract;
-    const html = await requestPage(url);
+    const r = await this.request({ url });
+    if (r.Err()) {
+      return r;
+    }
+    const html = r.Ok();
     const mm = m(html);
-    return {
+    return Ok({
       title: mm(chapter.title),
       content: mm(chapter.content),
-    };
+    });
   }
 }

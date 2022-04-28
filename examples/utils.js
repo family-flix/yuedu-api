@@ -1,3 +1,7 @@
+const a = require('./constants');
+
+console.log(JSON.stringify(a.BOOK_SOURCES, null, 2))
+
 function sleep(delay) {
   return new Promise((resolve) => {
     setTimeout(() => {

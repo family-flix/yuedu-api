@@ -148,6 +148,7 @@ export interface IBookSourceRules {
      * 搜索
      */
     search: {
+      i?: [string, string, string?][];
       data_source: IContentExtract;
       title: IContentExtract;
       author: IContentExtract;
@@ -156,4 +157,23 @@ export interface IBookSourceRules {
       intro?: IContentExtract;
     };
   };
+}
+
+export interface IPageRequestParams {
+  url: string;
+  mobile?: boolean;
+  cache_key?: string;
+  host?: string;
+  i?: [string, string, string?][];
+  kw?: string;
+}
+
+export interface ICache {
+  get: (key: string) => Promise<string>;
+  set: (key: string, content: string) => Promise<void>;
+}
+
+export interface Result<T> {
+  Ok(): null | T;
+  Err(): null | string;
 }

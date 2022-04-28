@@ -3,7 +3,7 @@ const Router = require("koa-router");
 const koaBody = require("koa-body");
 
 const core = require("../dist");
-const { BOOK_SOURCES } = require("./constants");
+const BOOK_SOURCES = require("./sources");
 
 const app = new Koa();
 const router = new Router();
