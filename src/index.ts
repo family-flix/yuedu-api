@@ -191,11 +191,18 @@ export class BookSource {
   /**
    * 获取指定章节
    */
-  static async chapter(chapter: { host: string; url: string }) {
-    const { host, url } = chapter;
+  static async chapter(chapter: {
+    host: string;
+    book_id: string;
+    chapter_id: string;
+  }) {
+    const { host, book_id, chapter_id } = chapter;
     const s = BookSource.sources.find((so) => so.host === host)!;
     const $instance = new BookSource(s);
-    const r = await $instance.chapter(url);
+    const r = await $instance.chapter({
+      book_id,
+      chapter_id,
+    });
     if (r.Err()) {
       return r;
     }
@@ -215,9 +222,18 @@ export class BookSource {
    */
   host: string;
   /**
+   * 是否使用移动模式
+   *
+   */
+  mobile?: boolean;
+  /**
    * 搜索地址
    */
-  private search_pathname: string;
+  // private search_pathname: string;
+  /**
+   * 提取规则
+   */
+  private fetch: IBookSourceRules["fetch"];
   /**
    * 解析规则
    */
@@ -240,10 +256,11 @@ export class BookSource {
   destroy: () => void;
 
   constructor(params: IBookSourceRules, Cache: ICache = new HtmlCache()) {
-    const { name, host, search, extract } = params;
+    const { name, host, mobile, fetch, extract } = params;
     this.name = name;
     this.host = host;
-    this.search_pathname = search;
+    this.mobile = mobile;
+    this.fetch = fetch;
     this.extract = extract;
     this.cache = Cache;
 
@@ -258,24 +275,25 @@ export class BookSource {
    * @returns
    */
   async search(keyword: string) {
-    const { host, search_pathname, extract } = this;
+    const { host, fetch, extract } = this;
+    // 原料获取
     const url =
-      host + encodeURI(search_pathname.replace(/\{\{key\}\}/, keyword));
+      host + encodeURI(fetch.search.page.replace(/\{\{kw\}\}/, keyword));
     const r = await this.request({
       url,
       host,
-      cache_key: search_pathname.match(/\{\{key\}\}/) ? undefined : keyword,
-      i: extract.search.i,
+      cache_key: fetch.search.page.match(/\{\{kw\}\}/) ? undefined : keyword,
+      i: fetch.search.i,
       kw: keyword,
     });
     if (r.Err()) {
       return r;
     }
+    // 内容提取
     const html = r.Ok();
     const dataSource = m(html)(extract.search.data_source, "g");
     console.log("[LOG] Search result is: ", dataSource?.length);
     console.log();
-
     if (dataSource === null) {
       return Ok([]);
     }
@@ -284,6 +302,7 @@ export class BookSource {
       const content = dataSource[i];
       const mm = m(content);
       result.push({
+        id: mm(extract.search.id) as string,
         title: mm(extract.search.title) as string,
         url: mm(extract.search.url) as string,
         author: mm(extract.search.author) as string,
@@ -317,12 +336,15 @@ export class BookSource {
   /**
    * 获取所有章节
    */
-  async chapters(url: string) {
-    const { mobile, chapters } = this.extract;
+  async chapters(id: string) {
+    const { host, mobile, fetch, extract } = this;
+    const { chapters } = extract;
+    const url =
+      host + encodeURI(fetch.chapters.page.replace(/\{\{book_id\}\}/, id));
     const r = await this.request({
       url,
       mobile,
-      i: chapters.i,
+      i: fetch.chapters.i,
     });
     if (r.Err()) {
       return r;
@@ -339,8 +361,9 @@ export class BookSource {
       const record = data_source[i];
       const mmm = m(record);
       results.push({
-        title: mmm(chapters.title) as string,
-        url: mmm(chapters.url) as string,
+        id: mmm(chapters.id) as string | null,
+        title: mmm(chapters.title) as string | null,
+        url: mmm(chapters.url) as string | null,
       });
     }
     return Ok(results);
@@ -386,8 +409,22 @@ export class BookSource {
   /**
    * 获取指定章节内容
    */
-  async chapter(url: string) {
+  async chapter({
+    book_id,
+    chapter_id,
+  }: {
+    book_id: string;
+    chapter_id: string;
+  }) {
+    const { host, fetch } = this;
     const { chapter } = this.extract;
+    const url =
+      host +
+      encodeURI(
+        fetch.chapter.page
+          .replace(/\{\{book_id\}\}/, book_id)
+          .replace(/\{\{chapter_id\}\}/, chapter_id)
+      );
     const r = await this.request({ url });
     if (r.Err()) {
       return r;

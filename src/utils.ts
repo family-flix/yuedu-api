@@ -38,8 +38,19 @@ export function m(content?: string) {
       // 没有正则表示不需要匹配
       return null;
     }
+    // 范围限定
+    const scoped = regexp_str.s
+      ? (() => {
+          console.log("[] limit content scope");
+          const res = content.match(regexp_str.s);
+          if (res) {
+            return res[0];
+          }
+          return content;
+        })()
+      : content;
     // 前置清理
-    const clean_content = replace<typeof content>(content)(regexp_str.b);
+    const clean_content = replace<typeof scoped>(scoped)(regexp_str.b);
     // 内容提取
     console.log("[] before extract content");
     console.log(clean_content);
@@ -121,6 +132,21 @@ export function findSource(sources: IBookSourceRules[], url: string) {
     }
     return false;
   });
+}
+
+/**
+ * 清理 html 无用字符
+ * @param html
+ * @returns
+ */
+export function cleanHTML(html: string) {
+  return html
+    .replace(/<script[\s\S]{0,}?>[\s\S]{0,}?<\/script>/g, "")
+    .replace(/<style[^>]{1,}?>[\s\S]{0,}?<\/style>/g, '')
+    .replace(/<link[^>]{0,}>[\s\S]{1,}?(<\/link>){0,1}/g, "")
+    .replace(/(?<=<[^>]{1,}>)([\s]{0,})(?=<)/g, "")
+    .replace(/<svg[^>]{0,}?>[\s\S]{1,}?<\/svg>/g, "")
+    .replace(/<!--[\s\S]{1,}?-->/g, "");
 }
 
 export function Ok<T>(value: T) {

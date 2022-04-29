@@ -1,6 +1,6 @@
 module.exports = {
   name: "笔趣阁",
-  host: "http://www.b5200.net",
+  host: "https://www.b5200.net",
   search: "/modules/article/search.php?searchkey={{key}}",
   extract: {
     search: {

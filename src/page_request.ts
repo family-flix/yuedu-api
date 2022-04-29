@@ -1,10 +1,12 @@
 import puppeteer, { Browser, HTTPRequest, HTTPResponse } from "puppeteer";
 import { ICache, IPageRequestParams, Result } from "./types";
-import { Err, Ok } from "./utils";
+import { cleanHTML, Err, Ok } from "./utils";
 
 const iPhone = puppeteer.devices["iPhone 6"];
 let existingBrowser: null | Browser = null;
 let destroy_browser_timer: NodeJS.Timeout | null = null;
+
+const headless = false;
 
 export function requestPage(Cache: null | ICache) {
   return {
@@ -30,7 +32,6 @@ export function requestPage(Cache: null | ICache) {
       console.log("[LOG] the url is");
       console.log(url);
       console.log("");
-      const headless = false;
       if (existingBrowser === null) {
         existingBrowser = await puppeteer.launch({
           ...(() => {
@@ -80,6 +81,11 @@ export function requestPage(Cache: null | ICache) {
       if (mobile) {
         await page.emulate(iPhone);
       }
+      // await page.setCookie({
+      //   name: "cf_clearance",
+      //   value: "JImoUHm3Ihean_bt8jER3IEQE.p3FaPMecn3vjghlCs-1651202157-0-150",
+      //   domain: ".caimoge.com",
+      // });
       try {
         if (host) {
           console.log("[LOG] goto host before goto target url");
@@ -96,42 +102,41 @@ export function requestPage(Cache: null | ICache) {
         });
       } catch (err) {
         console.log("[ERROR] goto url failed.");
-        return Err(`Request url: ${url} failed.`);
+        const error = err as any;
+        return Err(`Request url: ${url} failed because ${error.message}`);
       }
       console.log("[LOG] reach page");
       // 执行交互
-      for (let ii = 0; ii < i.length; ii += 1) {
-        const [method, selector] = i[ii];
-        if (method === "click") {
-          // console.log("click page", selector);
-          await page.click(selector);
+      try {
+        for (let ii = 0; ii < i.length; ii += 1) {
+          const [method, selector] = i[ii];
+          if (method === "click") {
+            // console.log("click page", selector);
+            await page.click(selector);
+          }
+          if (method === "type") {
+            await page.type(selector, kw);
+          }
+          if (method === "waitForSelector") {
+            // console.log("waitForSelector page", selector);
+            await page.waitForSelector(selector);
+          }
         }
-        if (method === "type") {
-          await page.type(selector, kw);
-        }
-        if (method === "waitForSelector") {
-          // console.log("waitForSelector page", selector);
-          await page.waitForSelector(selector);
-        }
+      } catch (err) {
+        const error = err as any;
+        return Err(`Exec some actions failed because ${error.message}`);
       }
 
       await page.waitForTimeout(1000);
       const html = await page.content();
       await page.close();
 
-      const clean_html = html
-        .replace(/<script[^>]{1,}?>[\s\S]{1,}?<\/script>/g, "")
-        .replace(/<link[^>]{1,}>[\s\S]{1,}?<\/link>/g, "")
-        // .replace(/(?<=<[^>]{1,}>)\s/g, "")
-        .replace(/(?<=<\/[^>]{1,}>)[\s]{0,}/g, "")
-        .replace(/<!--[\s\S]*?-->/g, "");
+      const clean_html = cleanHTML(html);
 
       if (Cache) {
         await Cache.set(url + cache_key, clean_html);
       }
 
-      console.log("get clean html is");
-      console.log(clean_html);
       return Ok(clean_html);
     },
     destroy: destroy_browser,

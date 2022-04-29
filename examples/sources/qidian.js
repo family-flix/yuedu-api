@@ -2,19 +2,33 @@ const source = {
   disabled: true,
   name: "起点",
   host: "https://m.qidian.com",
-  search: "/soushu/{{key}}.html",
+  mobile: true,
+  fetch: {
+    search: {
+      page: "/soushu/{{kw}}.html",
+    },
+    chapters: {
+      page: "/book/{{id}}/0.html",
+      i: [
+        ["click", ".book-catalog-info"],
+        ["waitForSelector", "#chapterNav"],
+      ],
+    },
+  },
   extract: {
-    mobile: true,
     search: {
       data_source: {
-        r: /<li class="book-li ">[\s\S]{1,}?<\/li>/,
+        r: /<li class="book-li[ ]{0,1}"[ ]{0,1}>[\s\S]{1,}?<\/li>/,
+      },
+      id: {
+        r: /m\.qidian\.com\/book\/([^\/]{1,}?)\/0/,
       },
       title: {
         b: [[/<\/{0,1}mark>/, ""]],
         r: /<h2 class="book-title">([^<]{1,})<\/h2>/,
       },
       author: {
-        r: /<\/svg>([^<]{1,}?)\s{0,}<\/span>/,
+        r: /book-author">([^<]{1,}?)\s{0,}<\/span>/,
       },
       intro: {
         r: /<p class="book-desc">([^<]{1,}?)<\/p>/,
@@ -29,10 +43,9 @@ const source = {
     },
     profile: {},
     chapters: {
-      i: [
-        ["click", ".book-catalog-info"],
-        ["waitForSelector", "#chapterNav"],
-      ],
+      id: {
+        r: /m\.qidian\.com\/book\/[^\/]{1,}?\/([^\/]{1,}?)\.html/,
+      },
       data_source: {
         r: /<li class="chapter-li[^%]{1,}?<\/li>/,
       },

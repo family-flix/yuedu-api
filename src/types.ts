@@ -21,6 +21,7 @@ export type IReplaceRules = [string, string][];
  * 提取器
  */
 export interface IContentExtract {
+  s?: string;
   b?: IReplaceRules;
   r: string;
   a?: IReplaceRules;
@@ -84,6 +85,17 @@ export type ISearchResult = {
   }[];
 };
 
+interface IPageFetch {
+  page: string;
+  /**
+   * 该页面的交互
+   * 第一个字符串是行为，第二个是选择器
+   * ['click', '.btn']
+   * ['type', '.input', 'test']
+   */
+  i?: [string, string, string?][];
+}
+
 /**
  * 书籍信息提取规则
  */
@@ -91,15 +103,23 @@ export interface IBookSourceRules {
   disabled?: boolean;
   name?: string;
   host: string;
-  search: string;
   /**
-   * 提取规则
+   * 是否需要模拟为手机进行访问
+   */
+  mobile?: boolean;
+  /**
+   * 页面获取规则
+   */
+  fetch: {
+    search: IPageFetch;
+    profile?: IPageFetch;
+    chapters: IPageFetch;
+    chapter: IPageFetch;
+  };
+  /**
+   * 内容提取规则
    */
   extract: {
-    /**
-     * 是否需要模拟为手机进行访问
-     */
-    mobile?: boolean;
     /**
      * 书籍详情
      */
@@ -117,14 +137,8 @@ export interface IBookSourceRules {
      * 章列表
      */
     chapters: {
-      /**
-       * 该页面的交互
-       * 第一个字符串是行为，第二个是选择器
-       * ['click', '.btn']
-       * ['type', '.input', 'test']
-       */
-      i?: [string, string, string?][];
       data_source: IContentExtract;
+      id: IContentExtract;
       title: IContentExtract;
       url: IContentExtract;
     };
@@ -148,8 +162,8 @@ export interface IBookSourceRules {
      * 搜索
      */
     search: {
-      i?: [string, string, string?][];
       data_source: IContentExtract;
+      id: IContentExtract;
       title: IContentExtract;
       author: IContentExtract;
       url: IContentExtract;

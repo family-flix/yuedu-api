@@ -5,34 +5,25 @@ import { BookSource } from "../../src/index";
 
 test("qidian search", async () => {
   const source = new BookSource(s, null);
-  const result = await source.search("道诡异仙");
+  const result = await source.search("生活系游戏");
   source.destroy();
 
   expect(result.Err()).toBe(null);
   const value = result.Ok();
   expect(value[0]).toStrictEqual({
-    title: "道诡异仙",
-    url: "//m.qidian.com/book/1031794030/0.html",
-    author: "狐尾的笔",
-    cover: "//bookcover.yuewen.com/qdbimg/349573/1031794030/150",
+    id: "1012710206",
+    title: "生活系游戏",
+    author: "吨吨吨吨吨",
+    cover: "//bookcover.yuewen.com/qdbimg/349573/1012710206/150",
     intro:
-      "诡异的天道，异常的仙佛，是真？是假？陷入迷惘的李火旺无法分辨。可让他无法分辨的不仅仅只是这些。还有他自己，他病了，病的很重。",
-  });
-  expect(value[1]).toStrictEqual({
-    title: "诡异道主",
-    url: "//m.qidian.com/book/1033557974/0.html",
-    author: "林野牧童",
-    cover: "//bookcover.yuewen.com/qdbimg/349573/1033557974/150",
-    intro:
-      "一觉醒来，周恒发现自己穿越了。这里混乱，动荡，诡异妖邪并存，民不聊生。而周恒只是一个小捕快。穿越第一天就遇妖邪，饮恨西北。这应该是穿越者活的最短的一人了。给前辈们拖后退了。到了阴曹地府后，摆渡人看着周恒，面无表情说道。“来自异界的灵魂呀，生死簿上没有你的名字，哪来回哪去吧。”只见一股阴风袭来，周恒睁开眼睛，发现自己又复活了！",
+      "【一份卖相不好的宫保鸡丁】从江枫无意中发现自己居然可以看到自家老爹炒出来的菜的备注开始，他的人生就已经发生了翻天覆地的变化……1.本游戏自由度极高，请玩家自行探索.2.本游戏不会干预玩家的任何选择，请玩家努力解锁成就.3.一切解释归游戏所有.普群一群：781556033V群：720368320（全订即可）",
+    url: "//m.qidian.com/book/1012710206/0.html",
   });
 });
 
 test("qidian fetch chapters", async () => {
   const source = new BookSource(s, null);
-  const result = await source.chapters(
-    "https://m.qidian.com/book/1012710206/0.html"
-  );
+  const result = await source.chapters("1012710206");
   source.destroy();
 
   expect(result.Err()).toBe(null);
@@ -40,10 +31,12 @@ test("qidian fetch chapters", async () => {
   expect(value.length).toBe(932);
   expect(value.slice(0, 2)).toStrictEqual([
     {
+      id: "421067537",
       title: "第一章 游戏载入中",
       url: "//m.qidian.com/book/1012710206/421067537.html",
     },
     {
+      id: "421086103",
       title: "第二章 支线任务",
       url: "//m.qidian.com/book/1012710206/421086103.html",
     },

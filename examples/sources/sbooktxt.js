@@ -2,12 +2,25 @@ module.exports = {
   disabled: true,
   name: "顶点小说",
   host: "https://www.sbooktxt.com",
-  search: "/search.php?q={{key}}",
+  fetch: {
+    search: {
+      page: "/search.php?q={{kw}}",
+    },
+    chapters: {
+      page: "/{{book_id}}/",
+    },
+    chapter: {
+      page: "/{{book_id}}/{{chapter_id}}.html",
+    },
+  },
   extract: {
     search: {
       data_source: {
         b: [[/\n/, ""]],
         r: /<div class="result-item[\s\S]{1,}?<\/div>[ ]{0,}?<\/div>/,
+      },
+      id: {
+        r: /href="\/([^\/]{1,}?)\/"/,
       },
       title: {
         b: [
@@ -52,6 +65,9 @@ module.exports = {
         b: [[/<dt[\s\S]{1,}?<dt>/, ""]],
         r: /(<dd>([\s\S]{1,}?)<\/dd>)/,
       },
+      id: {
+        r: /href="\/[^\/]{1,}?\/([^\/]{1,}?)\.html"/,
+      },
       title: {
         r: /">([\s\S]{1,})<\/a>/,
       },
@@ -66,9 +82,11 @@ module.exports = {
         r: /<h1>([^<]{1,})<\/h1>/,
       },
       content: {
+        b: [[/&nbsp;<\/div>/, ""]],
         r: /id="content">([\s\S]{1,}?)<\/div>/,
         a: [
-          [/<div[\s\S]{1,}<\/div>(?=(<p))/, ""],
+          [/<div[\s\S]{0,}<\/div>(?=(<p))/, ""],
+          [/<\/div/, ""],
           [/&nbsp;/, ""],
           [/\s/, ""],
           [/<br>/, "\n"],

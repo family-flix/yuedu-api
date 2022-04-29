@@ -8,32 +8,97 @@ const BOOK_SOURCES = require("./sources");
 const app = new Koa();
 const router = new Router();
 
+function getType(v) {
+  return Object.prototype.toString.call(v).slice(8, -1);
+}
+function walkObj(obj, callback) {
+  const type = getType(obj);
+  if (type === "Object") {
+    return Object.keys(obj)
+      .map((key) => {
+        return {
+          [key]: walkObj(obj[key], callback),
+        };
+      })
+      .reduce((total, cur) => {
+        return { ...total, ...cur };
+      }, {});
+  }
+  if (type === "Array") {
+    return obj.map((v) => {
+      return walkObj(v, callback);
+    });
+  }
+  return callback(obj);
+}
+
 (async () => {
   await core.BookSource.add_source(BOOK_SOURCES);
+
+  router.get("/api/sources", (ctx) => {
+    const { rules } = ctx.query;
+    ctx.body = JSON.stringify({
+      code: 0,
+      msg: "",
+      data: {
+        page: 1,
+        pageSize: 10,
+        list: rules
+          ? walkObj(BOOK_SOURCES, (v) => {
+              return v.toString();
+            })
+          : BOOK_SOURCES.map((source) => {
+              const { name, host } = source;
+              return {
+                name,
+                host,
+              };
+            }),
+        total: BOOK_SOURCES.length,
+      },
+    });
+  });
+
   router.get("/api/books/search", async (ctx) => {
-    const { kw } = ctx.query;
-    const results = await core.BookSource.multi_search(kw);
+    const { kw, host } = ctx.query;
+    const results = await core.BookSource.search({ keyword: kw, host });
+    if (results.Err()) {
+      ctx.body = JSON.stringify({
+        code: 100,
+        msg: results.Err(),
+        data: null,
+      });
+      return;
+    }
     ctx.body = JSON.stringify({
       code: 0,
       data: {
         page: 1,
         pageSize: 10,
-        list: results,
+        list: results.Ok(),
         total: 0,
       },
     });
   });
   router.get("/api/books/chapters", async (ctx) => {
-    const { source_name, source_host, url } = ctx.query;
+    const { source_host, book_id, chapter_id } = ctx.query;
     const results = await core.BookSource.chapters({
-      url,
-      name: source_name,
       host: source_host,
+      book_id,
+      chapter_id,
     });
+    if (results.Err()) {
+      ctx.body = JSON.stringify({
+        code: 100,
+        msg: results.Err(),
+        data: null,
+      });
+      return;
+    }
     ctx.body = JSON.stringify({
       code: 0,
       data: {
-        list: results,
+        list: results.Ok(),
       },
     });
   });
@@ -44,9 +109,17 @@ const router = new Router();
       name: source_name,
       host: source_host,
     });
+    if (results.Err()) {
+      ctx.body = JSON.stringify({
+        code: 100,
+        msg: results.Err(),
+        data: null,
+      });
+      return;
+    }
     ctx.body = JSON.stringify({
       code: 0,
-      data: results,
+      data: results.Ok(),
     });
   });
 
