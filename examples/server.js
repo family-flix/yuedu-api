@@ -81,11 +81,10 @@ function walkObj(obj, callback) {
     });
   });
   router.get("/api/books/chapters", async (ctx) => {
-    const { source_host, book_id, chapter_id } = ctx.query;
+    const { host, book_id } = ctx.query;
     const results = await core.BookSource.chapters({
-      host: source_host,
+      host,
       book_id,
-      chapter_id,
     });
     if (results.Err()) {
       ctx.body = JSON.stringify({
@@ -103,10 +102,10 @@ function walkObj(obj, callback) {
     });
   });
   router.get("/api/books/chapter", async (ctx) => {
-    const { source_name, source_host, url } = ctx.query;
+    const { source_host, book_id, chapter_id } = ctx.query;
     const results = await core.BookSource.chapter({
-      url,
-      name: source_name,
+      book_id,
+      chapter_id,
       host: source_host,
     });
     if (results.Err()) {

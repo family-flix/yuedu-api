@@ -2,13 +2,17 @@ module.exports = {
   disabled: true,
   name: "采墨阁",
   host: "https://www.caimoge.com",
-  search: "/search/",
-  extract: {
+  fetch: {
     search: {
       i: [
         ["type", "#searchkey"],
         ["click", ".serBtn"],
       ],
+      page: "/search/",
+    },
+  },
+  extract: {
+    search: {
       data_source: {
         r: /<dl[\s\S]{1,}?<\/dl>/,
       },

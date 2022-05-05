@@ -2,7 +2,6 @@ module.exports = {
   disabled: true,
   name: "妙笔阁",
   host: "https://www.imiaobige.com",
-  search: "/search.html",
   fetch: {
     search: {
       page: "/search.html",
@@ -12,7 +11,7 @@ module.exports = {
       ],
     },
     chapters: {
-      page: '',
+      page: "/read/{{book_id}}/",
     },
   },
   extract: {

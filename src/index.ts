@@ -117,11 +117,7 @@ export class BookSource {
   /**
    * 根据指定源使用书籍 url 获取该书籍所有章节
    */
-  static async chapters(source: {
-    name?: string;
-    host: string;
-    url: string;
-  }): Promise<
+  static async chapters(source: { host: string; book_id: string }): Promise<
     Result<
       {
         title: string;
@@ -129,10 +125,11 @@ export class BookSource {
       }[]
     >
   > {
-    const { url, host } = source;
+    console.log(source);
+    const { book_id, host } = source;
     const s = BookSource.sources.find((s) => s.host === host)!;
     const $instance = new BookSource(s);
-    const r = await $instance.chapters(url);
+    const r = await $instance.chapters(book_id);
     if (r.Err()) {
       return r;
     }

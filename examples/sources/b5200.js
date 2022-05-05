@@ -1,7 +1,12 @@
 module.exports = {
   name: "笔趣阁",
   host: "https://www.b5200.net",
-  search: "/modules/article/search.php?searchkey={{key}}",
+  // search:
+  fetch: {
+    search: {
+      page: "/modules/article/search.php?searchkey={{key}}",
+    },
+  },
   extract: {
     search: {
       data_source: {
