@@ -10,6 +10,12 @@ module.exports = {
         ["click", ".s_btn"],
       ],
     },
+    chapters: {
+      page: "/{{book_id}}/",
+    },
+    chapter: {
+      page: "/{{book_id}}/{{chapter_id}}.html",
+    },
   },
   extract: {
     search: {
@@ -17,6 +23,9 @@ module.exports = {
         s: /novelslist2">[\s\S]{1,}?<\/div>/,
         b: [[/(?<=360px;">)<li>[\s\S]{1,}?<\/li>/, ""]],
         r: /<li[\s\S]{1,}?<\/li>/,
+      },
+      id: {
+        r: /href="http:\/\/www.wucuoxs\.com\/([0-9]{1,})\/"/,
       },
       title: {
         r: /s2"><a href="[^"]{1,}?">([\s\S]{1,}?)<\/a><\/span>/,
@@ -53,6 +62,9 @@ module.exports = {
       data_source: {
         b: [[/<dt[\s\S]{1,}?<dt>/, ""]],
         r: /(<dd>([\s\S]{1,}?)<\/dd>)/,
+      },
+      id: {
+        r: /href="\/[0-9]{1,}?\/([0-9]{1,})\.html"/,
       },
       title: {
         r: /">([\s\S]{1,})<\/a>/,

@@ -11,13 +11,20 @@ module.exports = {
       ],
     },
     chapters: {
+      // "https://www.imiaobige.com/novel/113672.html"
       page: "/read/{{book_id}}/",
+    },
+    chapter: {
+      page: "/{{book_id}}/{{chapter_id}}.html",
     },
   },
   extract: {
     search: {
       data_source: {
         r: /<dl[\s\S]{1,}?<\/dl>/,
+      },
+      id: {
+        r: /\/novel\/([0-9]{1,}?)\.html/,
       },
       title: {
         r: /h3><a href="[^"]{1,}?">([^<]{1,}?)<\/a>/,
@@ -43,12 +50,15 @@ module.exports = {
         b: [[/<dt[\s\S]{1,}?<dt>/, ""]],
         r: /(<dd>([\s\S]{1,}?)<\/dd>)/,
       },
+      id: {
+        r: /href="\/[0-9]{1,}?\/([0-9]{1,})\.html"/,
+      },
       title: {
         r: /">([\s\S]{1,})<\/a>/,
       },
       url: {
         r: /href="([^"]{1,}?)"/,
-        a: [[/^/, "https://www.wucuoxs.com"]],
+        a: [[/^/, "https://www.imiaobige.com"]],
       },
     },
     chapter: {

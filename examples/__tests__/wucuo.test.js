@@ -3,7 +3,7 @@ import { expect, test } from "vitest";
 import s from "../sources/wucuoxs";
 import { BookSource } from "../../src/index";
 
-test("sbooktxt search", async () => {
+test("search", async () => {
   const source = new BookSource(s, null);
   const result = await source.search("生活系游戏");
   source.destroy();
@@ -11,6 +11,7 @@ test("sbooktxt search", async () => {
   expect(result.Err()).toBe(null);
   const value = result.Ok();
   expect(value[0]).toStrictEqual({
+    id: "67312",
     title: "生活系游戏",
     url: "http://www.wucuoxs.com/67312/",
     author: "吨吨吨吨吨",
@@ -19,33 +20,34 @@ test("sbooktxt search", async () => {
   });
 }, 10000);
 
-test("sbooktxt fetch chapters", async () => {
+test("fetch chapters", async () => {
   const source = new BookSource(s, null);
-  const result = await source.chapters("https://www.wucuoxs.com/67312/");
+  const result = await source.chapters("67312");
   source.destroy();
-
   expect(result.Err()).toBe(null);
   const value = result.Ok();
   expect(value.length).toBe(919);
   expect(value.slice(0, 2)).toStrictEqual([
     {
+      id: "598321",
       title: "第一章 游戏载入中",
       url: "https://www.wucuoxs.com/67312/598321.html",
     },
     {
+      id: "598322",
       title: "第二章 支线任务",
       url: "https://www.wucuoxs.com/67312/598322.html",
     },
   ]);
 }, 10000);
 
-test("sbooktxt fetch chapter", async () => {
+test("fetch chapter", async () => {
   const source = new BookSource(s, null);
-  const result = await source.chapter(
-    "https://www.wucuoxs.com/67312/598321.html"
-  );
+  const result = await source.chapter({
+    book_id: "67312",
+    chapter_id: "598321",
+  });
   source.destroy();
-
   expect(result.Err()).toBe(null);
   const value = result.Ok();
   expect(value.title).toBe("第一章 游戏载入中");
