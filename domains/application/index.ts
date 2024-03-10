@@ -29,7 +29,7 @@ export class Application {
     this.env = env;
 
     const database_dir = path.join(root_path, "data");
-    const database_name = "family-flix.db?connection_limit=1";
+    const database_name = "yuedu.db?connection_limit=1";
     const storage_path = path.join(root_path, "storage");
     this.database_path = path.join(database_dir, database_name);
     this.database_dir = database_dir;

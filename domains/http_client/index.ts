@@ -1,5 +1,3 @@
-// import axios, { AxiosError, AxiosInstance, CancelToken } from "axios";
-
 import { BaseDomain, Handler } from "@/domains/base";
 import { JSONObject, Result } from "@/types/index";
 import { query_stringify } from "@/utils/index";
@@ -12,7 +10,7 @@ type TheTypesOfEvents = {
 };
 
 type HttpClientCoreProps = {
-  hostname: string;
+  hostname?: string;
   headers?: Record<string, string>;
 };
 type HttpClientCoreState = {};
@@ -23,18 +21,13 @@ export class HttpClientCore extends BaseDomain<TheTypesOfEvents> {
   hostname: string;
   headers: Record<string, string> = {};
 
-  constructor(props: Partial<{ _name: string }> & HttpClientCoreProps) {
+  constructor(props: Partial<{ _name: string }> & HttpClientCoreProps = {}) {
     super(props);
 
-    const { hostname, headers = {} } = props;
+    const { hostname = "", headers = {} } = props;
 
     this.hostname = hostname;
     this.headers = headers;
-    // this.user = user;
-    //     const client = axios.create({
-    //       timeout: 12000,
-    //     });
-    //     this.axios = client;
   }
 
   async get<T>(
@@ -42,11 +35,8 @@ export class HttpClientCore extends BaseDomain<TheTypesOfEvents> {
     query?: Record<string, string | number | undefined | null>,
     extra: Partial<{ headers: Record<string, string>; token: unknown }> = {}
   ): Promise<Result<T>> {
-    //     const client = this.axios;
-    // const user = this.user;
     try {
-      const h = this.hostname;
-      const url = `${h}${endpoint}${query ? "?" + query_stringify(query) : ""}`;
+      const url = `${this.hostname}${endpoint}${query ? "?" + query_stringify(query) : ""}`;
       const resp = await this.fetch<{ code: number | string; msg: string; data: unknown | null }>({
         url,
         method: "GET",
@@ -57,7 +47,7 @@ export class HttpClientCore extends BaseDomain<TheTypesOfEvents> {
           // Authorization: user.token,
         },
       });
-      console.log("before GET resp.data", resp.data);
+      // console.log("before GET resp.data", resp.data);
       return Result.Ok(resp.data as T);
     } catch (err) {
       const error = err as Error;
@@ -74,11 +64,7 @@ export class HttpClientCore extends BaseDomain<TheTypesOfEvents> {
     body?: JSONObject | FormData,
     extra: Partial<{ headers: Record<string, string>; token: unknown }> = {}
   ): Promise<Result<T>> {
-    //     const client = this.axios;
-    // const user = this.user;
-    const h = this.hostname;
-    const url = `${h}${endpoint}`;
-    // console.log(url, h, endpoint, this.headers);
+    const url = `${this.hostname}${endpoint}`;
     try {
       const resp = await this.fetch<{ code: number | string; msg: string; data: unknown | null }>({
         url,

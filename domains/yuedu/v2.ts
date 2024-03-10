@@ -1,22 +1,16 @@
 /**
  * @file 书源
  */
-import path from "path";
-
-import { writeFile } from "fs-extra";
-
 import { BrowserHelper } from "@/domains/browser";
-import { parseJSONStr, query_stringify } from "@/utils";
+import { parseJSONStr } from "@/utils";
 import { Result } from "@/types";
 
-import { BookSourceRule, ICache, PageRequestPayload, ISearchResult } from "./types";
-// import { HtmlCache } from "./cache";
+import { BookSourceRule } from "./types";
 import { m } from "./utils";
 
 type BookSourceCoreState = {};
 type BookSourceCoreProps = {
   payload: BookSourceRule;
-  // Cache: ICache;
   browser: BrowserHelper;
 };
 export class BookSourceCore {

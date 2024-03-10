@@ -1,5 +1,13 @@
 import { BookSourceRule, PageContentExtractRule, PageReplaceRule, Result } from "./types";
 
+export function sleep(delay = 3000) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(null);
+    }, delay);
+  });
+}
+
 export function getCapture(matched: RegExpMatchArray | null): string | null {
   if (matched === null) {
     return null;

@@ -1,246 +1,49 @@
-// @ts-nocheck
 /**
  * @file 书源
  */
+import path from "path";
+
+import { writeFile } from "fs-extra";
+
+import { BrowserHelper } from "@/domains/browser";
+import { parseJSONStr, query_stringify } from "@/utils";
 import { Result } from "@/types";
 
 import { BookSourceRule, ICache, PageRequestPayload, ISearchResult } from "./types";
-import { requestPage } from "./page_request";
-import { HtmlCache } from "./cache";
+// import { HtmlCache } from "./cache";
 import { m } from "./utils";
 
+type BookSourceCoreState = {};
+type BookSourceCoreProps = {
+  payload: BookSourceRule;
+  // Cache: ICache;
+  browser: BrowserHelper;
+};
 export class BookSourceCore {
-  /**
-   * 书源
-   */
-  static sources: BookSourceRule[];
-  /**
-   * 添加书源
-   */
-  static CreateSource(sources: BookSourceRule[]) {
-    BookSourceCore.sources = sources;
-  }
-  /**
-   * 加载书源
-   */
-  static LoadSource() {
-    return BookSourceCore.sources.filter((source) => !source.disabled) as BookSourceRule[];
-  }
-
-  /**
-   * 聚合源搜索
-   */
-  // static async multi_search(keyword: string): Promise<ISearchResult[]> {
-  //   const sources = BookSource.loadSource();
-  //   console.log("[LOG] Multi_search", sources);
-  //   const requests = [];
-  //   for (let i = 0; i < sources.length; i += 1) {
-  //     const { name, host } = sources[i];
-  //     const $instance = new BookSource(sources[i]);
-  //     requests.push(
-  //       (async () => {
-  //         const results = await $instance.search(keyword);
-  //         return {
-  //           name,
-  //           host,
-  //           $instance,
-  //           results,
-  //         };
-  //       })()
-  //     );
-  //   }
-  //   const resps = await Promise.all(requests);
-  //   const books: Record<string, ISearchResult> = {};
-  //   for (let i = 0; i < resps.length; i += 1) {
-  //     const { name, host, results } = resps[i];
-  //     for (let j = 0; j < results.length; j += 1) {
-  //       const { title, author, url, cover, intro } = results[j];
-  //       const uid = title + author;
-  //       books[uid] = books[uid] || {
-  //         title,
-  //         author,
-  //         cover,
-  //         intro,
-  //         chapters: [],
-  //         sources: [],
-  //       };
-  //       books[uid].cover = books[uid].cover || cover;
-  //       books[uid].intro = books[uid].intro || intro;
-  //       books[uid].sources.push({
-  //         name,
-  //         host,
-  //         url,
-  //         // $instance,
-  //       });
-  //     }
-  //   }
-  //   return Object.values(books);
-  // }
-
-  /**
-   * 获取书籍详情
-   */
-  static async FetchProfile(result: ISearchResult) {
-    // const { sources } = result;
-    // for (let i = 0; i < sources.length; i += 1) {
-    //   const { url, $instance } = sources[i];
-    //   $instance.profile(url);
-    // }
-  }
-
-  /**
-   * 使用指定源搜索
-   */
-  static async Search(source: { host: string; keyword: string }) {
-    const { keyword, host } = source;
-    const s = BookSourceCore.sources.find((s) => s.host === host)!;
-    const $instance = new BookSourceCore(s);
-    const r = await $instance.search(keyword);
+  static async Create(props: { payload: BookSourceRule }) {
+    const { payload } = props;
+    const r = await BrowserHelper.Launch();
     if (r.error) {
       return Result.Err(r.error.message);
     }
-    return Result.Ok(r.data);
+    const browser = r.data;
+    return Result.Ok(
+      new BookSourceCore({
+        payload,
+        browser,
+      })
+    );
   }
 
-  /**
-   * 根据指定源使用书籍 url 获取该书籍所有章节
-   */
-  static async chapters(source: { host: string; book_id: string }) {
-    console.log(source);
-    const { book_id, host } = source;
-    const s = BookSourceCore.sources.find((s) => s.host === host)!;
-    const $instance = new BookSourceCore(s);
-    const r = await $instance.chapters(book_id);
-    if (r.error) {
-      return Result.Err(r.error.message);
-    }
-    return Result.Ok(r.data);
-  }
+  rule: BookSourceRule;
 
-  /**
-   * 从多个源获取所有章节
-   */
-  // static async chapters_with_multi_sources(
-  //   sources: {
-  //     name?: string;
-  //     host: string;
-  //     url: string;
-  //   }[]
-  // ): Promise<
-  //   Result<
-  //     {
-  //       title: string;
-  //       sources: {
-  //         url: string;
-  //         name?: string;
-  //         host: string;
-  //       }[];
-  //     }[]
-  //   >
-  // > {
-  //   const chaptersMap: Record<string, any> = {};
-  //   for (let i = 0; i < sources.length; i += 1) {
-  //     const { name, url, host } = sources[i];
-  //     const source = BookSource.sources.find((s) => s.host === host)!;
-  //     const $instance = new BookSource(source);
-  //     const r = await $instance.chapters(url);
-  //     if (r.Err()) {
-  //       continue;
-  //     }
-  //     const chapters = r.Ok();
-  //     // console.log("fetch ", url, source, chapters);
-  //     for (let i = 0; i < chapters.length; i += 1) {
-  //       const { title, url } = chapters[i];
-  //       chaptersMap[title] = chaptersMap[title] || {
-  //         title,
-  //         sources: [],
-  //       };
-  //       chaptersMap[title].sources.push({
-  //         name,
-  //         host,
-  //         url,
-  //       });
-  //     }
-  //   }
-  //   const result = Object.values(chaptersMap);
-  //   return Ok(result);
-  // }
+  browser: BrowserHelper;
 
-  /**
-   * 获取指定章节
-   */
-  static async chapter(chapter: { host: string; book_id: string; chapter_id: string }) {
-    const { host, book_id, chapter_id } = chapter;
-    const s = BookSourceCore.sources.find((so) => so.host === host)!;
-    const $instance = new BookSourceCore(s);
-    const r = await $instance.chapter({
-      book_id,
-      chapter_id,
-    });
-    if (r.error) {
-      return Result.Err(r.error.message);
-    }
-    const { title, content } = r.data;
-    return Result.Ok({
-      title,
-      content,
-    });
-  }
+  constructor(props: BookSourceCoreProps) {
+    const { payload, browser } = props;
 
-  /**
-   * 书源名称
-   */
-  name?: string;
-  /**
-   * 书源域名
-   */
-  host: string;
-  /**
-   * 是否使用移动模式
-   *
-   */
-  mobile?: boolean;
-  /**
-   * 搜索地址
-   */
-  // private search_pathname: string;
-  /**
-   * 提取规则
-   */
-  private fetch: BookSourceRule["fetch"];
-  /**
-   * 解析规则
-   */
-  private extract: BookSourceRule["extract"];
-  /**
-   * 缓存
-   */
-  private cache: null | ICache;
-  /**
-   * 页面请求器
-   * @param params
-   * @param Cache
-   */
-  request: (params: PageRequestPayload) => Promise<Result<any>>;
-  /**
-   *
-   * @param params
-   * @param Cache
-   */
-  destroy: () => void;
-
-  constructor(params: BookSourceRule, Cache: ICache = new HtmlCache()) {
-    const { name, host, mobile, fetch, extract } = params;
-    this.name = name;
-    this.host = host;
-    this.mobile = mobile;
-    this.fetch = fetch;
-    this.extract = extract;
-    this.cache = Cache;
-
-    const { request, destroy } = requestPage(Cache);
-    this.request = request;
-    this.destroy = destroy;
+    this.rule = payload;
+    this.browser = browser;
   }
 
   /**
@@ -249,10 +52,10 @@ export class BookSourceCore {
    * @returns
    */
   async search(keyword: string) {
-    const { host, fetch, extract } = this;
+    const { host, fetch, extract } = this.rule;
     // 原料获取
     const url = host + encodeURI(fetch.search.page.replace(/\{\{kw\}\}/, keyword));
-    const r = await this.request({
+    const r = await this.browser.request({
       url,
       host,
       cache_key: fetch.search.page.match(/\{\{kw\}\}/) ? undefined : keyword,
@@ -260,38 +63,139 @@ export class BookSourceCore {
       kw: keyword,
     });
     if (r.error) {
-      return r;
+      return Result.Err(r.error.message);
     }
     // 内容提取
     const html = r.data;
-    const dataSource = m(html)(extract.search.data_source, "g");
-    console.log("[LOG] Search result is: ", dataSource?.length);
-    console.log();
-    if (dataSource === null) {
-      return Result.Ok([]);
+    // writeFile(path.resolve(__dirname, "./mock/qidian/search1.html"), html);
+    const regexp1 = /type="application\/json">(\{"pageContext":[^<]{1,})<\//;
+    // const dataSource = m(html)(extract.search.data_source, "g");
+    const json_str = html.match(regexp1);
+    if (!json_str) {
+      return Result.Err("没有匹配到列表数据");
     }
-    const result = [];
-    for (let i = 0; i < dataSource.length; i += 1) {
-      const content = dataSource[i];
-      const mm = m(content);
-      result.push({
-        id: mm(extract.search.id) as string,
-        title: mm(extract.search.title) as string,
-        url: mm(extract.search.url) as string,
-        author: mm(extract.search.author) as string,
-        cover: mm(extract.search.cover) as string | undefined,
-        intro: mm(extract.search.intro) as string | undefined,
-      });
+    const json_r = parseJSONStr<{
+      pageContext: {
+        _pageId: string;
+        pageProps: {
+          pageData: {
+            keyState: number;
+            bookInfo: {
+              records: {
+                cbid: string;
+                bid: number;
+                bName: string;
+                desc: string;
+                catId: number;
+                cat: string;
+                subCateId: number;
+                subCateName: string;
+                subCateUrl: string;
+                cid: number;
+                bAuth: string;
+                state: string;
+                signStatus: string;
+                imgUrl: string;
+                isVip: number;
+                form: number;
+                fineLayoutOrg: number;
+                fineLayout: number;
+                lastChapterName: string;
+                lastUpdateTime: string;
+                bookType: string;
+                isPub: number;
+                updateTime: string;
+                algInfo: string;
+                clickCnt: number;
+                recomendCnt: number;
+                cnt: string;
+                isInShelf: number;
+                _index: number;
+              }[];
+              total: number;
+              pageNum: number;
+              pageSize: number;
+              isLast: number;
+            };
+            filters: {
+              key: string;
+              title: string;
+              items: {
+                value: number;
+                text: string;
+              }[];
+            }[];
+            tagInfo: null;
+            kw: string;
+            orderBy: {
+              key: string;
+              selectedValue: number;
+              items: {
+                text: string;
+                value: string;
+              }[];
+            };
+            user: {
+              isLogin: boolean;
+              avatar: string;
+              nickName: string;
+              tucaoUrl: string;
+              guid: string;
+            };
+            gender: string;
+            urlOriginal: string;
+          };
+          configData: null;
+        };
+        pageTrackReportExt: {
+          pid: string;
+          type: string;
+        };
+        routeParams: {
+          kw: string;
+        };
+        urlPathname: string;
+        INITIAL_STATE: string;
+        urlOriginal: string;
+        hostname: string;
+        errorMsg: string;
+        redirectUrl: string;
+      };
+    }>(json_str[1]);
+    if (json_r.error) {
+      return Result.Err(json_r.error.message);
     }
-    return Result.Ok(result);
+    const json = json_r.data;
+    // console.log("[LOG] Search result is: ", dataSource?.length);
+    // const result = [];
+    // for (let i = 0; i < dataSource.length; i += 1) {
+    //   const content = dataSource[i];
+    //   const mm = m(content);
+    //   result.push({
+    //     id: mm(extract.search.id) as string,
+    //     title: mm(extract.search.title) as string,
+    //     url: mm(extract.search.url) as string,
+    //     author: mm(extract.search.author) as string,
+    //     cover: mm(extract.search.cover) as string | undefined,
+    //     intro: mm(extract.search.intro) as string | undefined,
+    //   });
+    // }
+    const { records, pageNum, total, isLast, pageSize } = json.pageContext.pageProps.pageData.bookInfo;
+    return Result.Ok({
+      items: records,
+      page: pageNum,
+      total: total,
+      no_more: isLast,
+      page_size: pageSize,
+    });
   }
 
   /**
    * 获取书籍详情
    */
   async profile(url: string) {
-    const { profile } = this.extract;
-    const r = await this.request({ url });
+    const { profile } = this.rule.extract;
+    const r = await this.browser.request({ url });
     if (r.error) {
       return Result.Err(r.error.message);
     }
@@ -309,10 +213,10 @@ export class BookSourceCore {
    * 获取所有章节
    */
   async chapters(id: string) {
-    const { host, mobile, fetch, extract } = this;
+    const { host, mobile, fetch, extract } = this.rule;
     const { chapters } = extract;
     const url = host + encodeURI(fetch.chapters.page.replace(/\{\{book_id\}\}/, id));
-    const r = await this.request({
+    const r = await this.browser.request({
       url,
       mobile,
       i: fetch.chapters.i,
@@ -343,8 +247,8 @@ export class BookSourceCore {
    * 获取书籍最新章节
    */
   async latest_chapters(url: string) {
-    const { chapters } = this.extract;
-    const r = await this.request({ url });
+    const { chapters } = this.rule.extract;
+    const r = await this.browser.request({ url });
     if (r.error) {
       return r;
     }
@@ -369,8 +273,8 @@ export class BookSourceCore {
    * 获取最近更新时间
    */
   async latest_updated(url: string) {
-    const { latest_updated } = this.extract;
-    const r = await this.request({ url });
+    const { latest_updated } = this.rule.extract;
+    const r = await this.browser.request({ url });
     if (r.error) {
       return Result.Err(r.error.message);
     }
@@ -381,20 +285,29 @@ export class BookSourceCore {
    * 获取指定章节内容
    */
   async chapter({ book_id, chapter_id }: { book_id: string; chapter_id: string }) {
-    const { host, fetch } = this;
-    const { chapter } = this.extract;
+    const { host, fetch, extract } = this.rule;
+    if (!fetch.chapter) {
+      return Result.Err("missing fetch.chapter");
+    }
+    if (!extract.chapter) {
+      return Result.Err("missing extract.chapter");
+    }
     const url =
       host +
       encodeURI(fetch.chapter.page.replace(/\{\{book_id\}\}/, book_id).replace(/\{\{chapter_id\}\}/, chapter_id));
-    const r = await this.request({ url });
+    const r = await this.browser.request({ url });
     if (r.error) {
       return Result.Err(r.error.message);
     }
     const html = r.data;
     const mm = m(html);
     return Result.Ok({
-      title: mm(chapter.title),
-      content: mm(chapter.content),
+      title: mm(extract.chapter.title),
+      content: mm(extract.chapter.content),
     });
+  }
+
+  destroy() {
+    this.browser.destroy();
   }
 }

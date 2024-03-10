@@ -1,12 +1,24 @@
 /**
  * @file 支持从数据库按分页获取列表
  * @doc https://www.prisma.io/docs/concepts/components/prisma-client/pagination
+ * @deprecated 使用 store.list_with_cursor
  */
 import { PrismaClient } from "@prisma/client";
 
 import { Result, Unpacked } from "@/types";
 
-type ModelKeys = keyof Omit<PrismaClient, "$on" | "$connect" | "$disconnect" | "$use" | "$executeRaw" | "$executeRawUnsafe" | "$queryRaw" | "$queryRawUnsafe" | "$transaction">;
+type ModelKeys = keyof Omit<
+  PrismaClient,
+  | "$on"
+  | "$connect"
+  | "$disconnect"
+  | "$use"
+  | "$executeRaw"
+  | "$executeRawUnsafe"
+  | "$queryRaw"
+  | "$queryRawUnsafe"
+  | "$transaction"
+>;
 
 export function paginationFactory<T>(params: PaginationParams): [any, (list: T[], total: number) => any] {
   return [paginationParams<T>(params), result<T>(params)];
@@ -92,7 +104,7 @@ export class List<T extends PrismaClient[ModelKeys]> {
       ...findManyParams,
     });
     const response = getResult(list, total) as {
-      list: Unpacked<ReturnType<T["findMany"]>>[0][];
+      // list: Unpacked<ReturnType<T["findMany"]>>[number][];
       total: number;
       page: number;
       page_size: number;
