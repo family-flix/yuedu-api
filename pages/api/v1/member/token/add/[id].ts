@@ -4,10 +4,11 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { BaseApiResp } from "@/types";
+import { store } from "@/store/index";
+import { User } from "@/domains/user/index";
+import { BaseApiResp } from "@/types/index";
 import { response_error_factory } from "@/utils/server";
-import { store } from "@/store";
-import { User } from "@/domains/user";
+import { r_id } from "@/utils/index";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<BaseApiResp<unknown>>) {
   const e = response_error_factory(res);
@@ -23,11 +24,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return e("缺少成员 id");
   }
   const { id: user_id } = t_res.data;
-  const member_res = await store.find_member({ id: member_id, user_id });
-  if (member_res.error) {
-    return e(member_res);
-  }
-  if (!member_res.data) {
+  const member = await store.prisma.member.findFirst({
+    where: {
+      id: member_id,
+      user_id,
+    },
+  });
+  if (!member) {
     return e("没有匹配的成员记录");
   }
   const token_res = await User.Token({ id: member_id });
@@ -35,19 +38,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return e(token_res);
   }
   const token = token_res.data;
-  const r = await store.add_member_link({
-    member_id: member_id,
-    token,
-    used: 0,
+  const r = await store.prisma.member_token.create({
+    data: {
+      id: r_id(),
+      token,
+      used: 0,
+      member_id: member_id,
+    },
   });
-  if (r.error) {
-    return e(r);
-  }
   res.status(200).json({
     code: 0,
     msg: "",
     data: {
-      id: r.data.id,
+      id: r.id,
       token,
     },
   });

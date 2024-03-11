@@ -4,10 +4,11 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { BaseApiResp, Result } from "@/types";
+import { store } from "@/store/index";
+import { User } from "@/domains/user/index";
+import { BaseApiResp, Result } from "@/types/index";
 import { response_error_factory } from "@/utils/server";
-import { store } from "@/store";
-import { User } from "@/domains/user";
+import { r_id } from "@/utils/index";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<BaseApiResp<unknown>>) {
   const e = response_error_factory(res);
@@ -37,37 +38,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   if (existing_member) {
     return e(Result.Err("已存在相同备注的成员了"));
   }
-  const r = await store.add_member({
-    remark,
-    name: name || null,
-    email: email || null,
-    disabled: 0,
-    user_id: user.id,
+  const r = await store.prisma.member.create({
+    data: {
+      id: r_id(),
+      remark,
+      name: name || null,
+      email: email || null,
+      disabled: 0,
+      user_id: user.id,
+    },
   });
-  if (r.error) {
-    return e(r);
-  }
-  const token_res = await User.Token({ id: r.data.id });
+  const token_res = await User.Token({ id: r.id });
   if (token_res.error) {
     return e(token_res);
   }
   const token = token_res.data;
-  const r2 = await store.add_member_link({
-    member_id: r.data.id,
-    token,
-    used: 0,
+  const r2 = await store.prisma.member_token.create({
+    data: {
+      id: r_id(),
+      token,
+      used: 0,
+      member_id: r.id,
+    },
   });
-  if (r2.error) {
-    return e(r2);
-  }
   const member = {
-    id: r.data.id,
-    remark: r.data.remark,
+    id: r.id,
+    remark: r.remark,
     tokens: [
       {
-        id: r2.data.id,
-        token: r2.data.token,
-        used: r2.data.used,
+        id: r2.id,
+        token: r2.token,
+        used: r2.used,
       },
     ],
   };

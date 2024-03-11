@@ -4,10 +4,10 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { BaseApiResp } from "@/types";
+import { store } from "@/store/index";
+import { User } from "@/domains/user/index";
 import { response_error_factory } from "@/utils/server";
-import { User } from "@/domains/user";
-import { store } from "@/store";
+import { BaseApiResp } from "@/types/index";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<BaseApiResp<unknown>>) {
   const e = response_error_factory(res);
@@ -24,22 +24,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
   const { id: user_id } = t_res.data;
 
-  const member_res = await store.find_member({ id, user_id });
-  if (member_res.error) {
-    return e(member_res);
-  }
-  const member = member_res.data;
+  const member = await store.prisma.member.findFirst({
+    where: {
+      id,
+      user_id,
+    },
+  });
   if (!member) {
     return e("没有匹配的成员");
   }
 
-  const r = await store.update_member(id, {
-    delete: 1,
+  const r = await store.prisma.member.update({
+    where: {
+      id,
+    },
+    data: {
+      delete: 1,
+    },
   });
-
-  if (r.error) {
-    return e(r);
-  }
-
   res.status(200).json({ code: 0, msg: "删除成员成功", data: null });
 }

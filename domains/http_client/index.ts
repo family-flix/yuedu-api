@@ -37,7 +37,7 @@ export class HttpClientCore extends BaseDomain<TheTypesOfEvents> {
   ): Promise<Result<T>> {
     try {
       const url = `${this.hostname}${endpoint}${query ? "?" + query_stringify(query) : ""}`;
-      const resp = await this.fetch<{ code: number | string; msg: string; data: unknown | null }>({
+      const resp = await this.fetch<T>({
         url,
         method: "GET",
         // cancelToken: extra.token,
@@ -66,7 +66,7 @@ export class HttpClientCore extends BaseDomain<TheTypesOfEvents> {
   ): Promise<Result<T>> {
     const url = `${this.hostname}${endpoint}`;
     try {
-      const resp = await this.fetch<{ code: number | string; msg: string; data: unknown | null }>({
+      const resp = await this.fetch<T>({
         url,
         method: "POST",
         data: body,

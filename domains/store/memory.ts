@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * @file 内存数据库
  * 仅用于单测
@@ -7,7 +8,7 @@ import { PrismaClient } from "@prisma/client";
 import omit from "lodash/omit";
 
 import { BaseDomain, Handler } from "@/domains/base";
-import { DriveTypes } from "@/domains/drive/constants";
+// import { DriveTypes } from "@/domains/drive/constants";
 import { FileType, MediaTypes } from "@/constants";
 import { update } from "@/utils";
 import { Result } from "@/types";
@@ -471,7 +472,7 @@ export class MemoryStore extends BaseDomain<TheTypesOfEvents> implements DataSto
           drive_token_id = data.drive_token_id;
         }
         this.drives.push({
-          type: DriveTypes.AliyunResourceDrive,
+          type: 0,
           created: dayjs().toDate(),
           updated: dayjs().toDate(),
           id,

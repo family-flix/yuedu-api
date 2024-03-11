@@ -20,7 +20,7 @@ async function main() {
     return;
   }
   const browser = r.data;
-  const source = new Bg3Source({ id: "", unique_id: "bg3", browser });
+  const source = new Bg3Source({ unique_id: "bg3", browser });
   const r2 = await source.search("从斩妖除魔开始长生不死");
   // await source.destroy();
   if (r2.error) {
@@ -45,6 +45,7 @@ async function main() {
         unique_id: novel.id,
         name: novel.name,
         url: novel.url,
+        profile_id: "",
         source_id: novel_source.id,
       },
     });

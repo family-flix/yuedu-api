@@ -3,7 +3,6 @@ import { bytes_to_size } from "@/utils";
 import { PrismaClient } from "@prisma/client";
 
 import { DataStore, ModelKeys, Statistics } from "./types";
-import { add_factory, delete_factory, update_factory, first_factory, many_factory, pagination_factory } from "./utils";
 
 export class DatabaseStore implements DataStore {
   prisma: PrismaClient;

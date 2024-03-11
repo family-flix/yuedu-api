@@ -4,11 +4,11 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { User } from "@/domains/user";
-import { BaseApiResp, Result } from "@/types";
+import { store } from "@/store/index";
+import { User } from "@/domains/user/index";
+import { BaseApiResp, Result } from "@/types/index";
 import { response_error_factory } from "@/utils/server";
-import { store } from "@/store";
-import { parseJSONStr } from "@/utils";
+import { parseJSONStr } from "@/utils/index";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<BaseApiResp<unknown>>) {
   const e = response_error_factory(res);
@@ -22,14 +22,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   if (!member_id) {
     return e(Result.Err("缺少成员 id"));
   }
-  const member_res = await store.find_member({
-    id: member_id,
-    user_id: user.id,
+  const member = await store.prisma.member.findFirst({
+    where: {
+      id: member_id,
+      user_id: user.id,
+    },
   });
-  if (member_res.error) {
-    return e(member_res);
-  }
-  const member = member_res.data;
   if (!member) {
     return e(Result.Err("没有匹配的记录"));
   }

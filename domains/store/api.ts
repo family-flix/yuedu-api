@@ -9,7 +9,7 @@ import omit from "lodash/omit";
 
 import { BaseDomain, Handler } from "@/domains/base";
 import { HttpClientCore } from "@/domains/http_client";
-import { connect } from "@/domains/http_client/provider.axios";
+import { connect } from "@/domains/http_client/connect.axios";
 import { Result } from "@/types/index";
 
 import { DataStore } from "./types";

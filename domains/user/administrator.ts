@@ -146,6 +146,7 @@ export class Administrator extends User {
   async refresh_stats() {
     const store = this.store;
     const range_today = [dayjs().startOf("day").toISOString(), dayjs().endOf("day").toISOString()];
+    // @ts-ignore
     const payload: Statistics = {
       drive_count: await store.prisma.drive.count({
         where: {
@@ -155,94 +156,94 @@ export class Administrator extends User {
       drive_total_size_count: 0,
       drive_used_size_count: 0,
       /** 电视剧总数 */
-      season_count: await store.prisma.media.count({
-        where: {
-          type: MediaTypes.Season,
-          user_id: this.id,
-        },
-      }),
-      /** 电影总数 */
-      movie_count: await store.prisma.media.count({
-        where: {
-          type: MediaTypes.Movie,
-          user_id: this.id,
-        },
-      }),
-      /** 剧集总数 */
-      episode_count: await store.prisma.media_source.count({
-        where: {
-          type: MediaTypes.Season,
-          user_id: this.id,
-        },
-      }),
-      /** 所有同步任务数 */
-      sync_task_count: await store.prisma.resource_sync_task.count({
-        where: {
-          status: ResourceSyncTaskStatus.WorkInProgress,
-          invalid: 0,
-          user_id: this.id,
-        },
-      }),
-      /** 存在问题的同步任务数 */
-      invalid_sync_task_count: await store.prisma.resource_sync_task.count({
-        where: {
-          invalid: 1,
-          user_id: this.id,
-        },
-      }),
-      /** 存在问题的电视剧数 */
-      invalid_season_count: await store.prisma.invalid_media.count({
-        where: {
-          type: MediaErrorTypes.Season,
-          user_id: this.id,
-        },
-      }),
-      /** 存在问题的电影数 */
-      invalid_movie_count: await store.prisma.invalid_media.count({
-        where: {
-          type: MediaErrorTypes.Movie,
-          user_id: this.id,
-        },
-      }),
-      /** 未识别的解析结果数 */
-      unknown_media_count: await store.prisma.parsed_media.count({
-        where: {
-          media_profile_id: null,
-          user_id: this.id,
-        },
-      }),
-      /** 用户反馈问题数 */
-      report_count: await store.prisma.report_v2.count({
-        where: {
-          type: {
-            in: [ReportTypes.Movie, ReportTypes.TV, ReportTypes.Question],
-          },
-          OR: [
-            {
-              answer: null,
-            },
-            {
-              answer: "",
-            },
-          ],
-          user_id: this.id,
-        },
-      }),
-      /** 用户「想看」请求数 */
-      media_request_count: await store.prisma.report_v2.count({
-        where: {
-          type: ReportTypes.Want,
-          OR: [
-            {
-              answer: null,
-            },
-            {
-              answer: "",
-            },
-          ],
-          user_id: this.id,
-        },
-      }),
+      // season_count: await store.prisma.media.count({
+      //   where: {
+      //     type: MediaTypes.Season,
+      //     user_id: this.id,
+      //   },
+      // }),
+      // /** 电影总数 */
+      // movie_count: await store.prisma.media.count({
+      //   where: {
+      //     type: MediaTypes.Movie,
+      //     user_id: this.id,
+      //   },
+      // }),
+      // /** 剧集总数 */
+      // episode_count: await store.prisma.media_source.count({
+      //   where: {
+      //     type: MediaTypes.Season,
+      //     user_id: this.id,
+      //   },
+      // }),
+      // /** 所有同步任务数 */
+      // sync_task_count: await store.prisma.resource_sync_task.count({
+      //   where: {
+      //     status: ResourceSyncTaskStatus.WorkInProgress,
+      //     invalid: 0,
+      //     user_id: this.id,
+      //   },
+      // }),
+      // /** 存在问题的同步任务数 */
+      // invalid_sync_task_count: await store.prisma.resource_sync_task.count({
+      //   where: {
+      //     invalid: 1,
+      //     user_id: this.id,
+      //   },
+      // }),
+      // /** 存在问题的电视剧数 */
+      // invalid_season_count: await store.prisma.invalid_media.count({
+      //   where: {
+      //     type: MediaErrorTypes.Season,
+      //     user_id: this.id,
+      //   },
+      // }),
+      // /** 存在问题的电影数 */
+      // invalid_movie_count: await store.prisma.invalid_media.count({
+      //   where: {
+      //     type: MediaErrorTypes.Movie,
+      //     user_id: this.id,
+      //   },
+      // }),
+      // /** 未识别的解析结果数 */
+      // unknown_media_count: await store.prisma.parsed_media.count({
+      //   where: {
+      //     media_profile_id: null,
+      //     user_id: this.id,
+      //   },
+      // }),
+      // /** 用户反馈问题数 */
+      // report_count: await store.prisma.report_v2.count({
+      //   where: {
+      //     type: {
+      //       in: [ReportTypes.Movie, ReportTypes.TV, ReportTypes.Question],
+      //     },
+      //     OR: [
+      //       {
+      //         answer: null,
+      //       },
+      //       {
+      //         answer: "",
+      //       },
+      //     ],
+      //     user_id: this.id,
+      //   },
+      // }),
+      // /** 用户「想看」请求数 */
+      // media_request_count: await store.prisma.report_v2.count({
+      //   where: {
+      //     type: ReportTypes.Want,
+      //     OR: [
+      //       {
+      //         answer: null,
+      //       },
+      //       {
+      //         answer: "",
+      //       },
+      //     ],
+      //     user_id: this.id,
+      //   },
+      // }),
       new_file_count_today: await store.prisma.file.count({
         where: {
           type: FileType.File,
