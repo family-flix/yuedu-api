@@ -14,14 +14,8 @@ import { NovelCore } from "@/domains/novel";
 export default async function handler(req: NextApiRequest, res: NextApiResponse<BaseApiResp<unknown>>) {
   const e = response_error_factory(res);
   const { authorization } = req.headers;
-  const {
-    novel_id,
-    next_marker = "",
-    page_size = 100,
-  } = req.body as Partial<{
+  const { novel_id } = req.body as Partial<{
     novel_id: string;
-    next_marker: string;
-    page_size: number;
   }>;
   const t_res = await Member.New(authorization, store);
   if (t_res.error) {

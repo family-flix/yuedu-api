@@ -8,6 +8,21 @@ const _client = new HttpClientCore({
   hostname: "https://m.qidian.com",
 });
 connect(_client);
+_client.setHeaders({
+  authority: "m.qidian.com",
+  accept:
+    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+  "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+  cookie:
+    "hiijack=0; e1=%7B%22l6%22%3A%22%22%2C%22l1%22%3A3%2C%22pid%22%3A%22qd_P_Searchresult%22%2C%22eid%22%3A%22qd_S81%22%7D; e2=%7B%22l6%22%3A%22%22%2C%22l1%22%3A2%2C%22pid%22%3A%22qd_p_qidian%22%2C%22eid%22%3A%22%22%7D; Hm_lvt_f00f67093ce2f38f215010b699629083=1708513692; e1=%7B%22l6%22%3A%22%22%2C%22l1%22%3A2%2C%22pid%22%3A%22qd_p_qidian%22%2C%22eid%22%3A%22%22%7D; e2=%7B%22l6%22%3A%22%22%2C%22l1%22%3A2%2C%22pid%22%3A%22qd_p_qidian%22%2C%22eid%22%3A%22qd_H_Search%22%7D; supportwebp=true; newstatisticUUID=1708519993_1240487663; fu=979443076; hiijack=0; _yep_uuid=b2bd78ea-78b5-33d6-eaa5-3c55a29d5e7d; Hm_lvt_1d7d9ab48732e057a5e22e962e5797a6=1708524248; supportWebp=true; Hm_lpvt_1d7d9ab48732e057a5e22e962e5797a6=1710038037; _ga_D20NXNVDG2=GS1.1.1710121298.7.0.1710121298.0.0.0; _ga_VMQL7235X0=GS1.1.1710121298.7.0.1710121298.0.0.0; traffic_utm_referer=; _gid=GA1.2.2038683927.1710167461; tgw_l7_route=7dd6485eac2f4e5e8cec004db2aec682; seo-jump-referrer=; _csrfToken=cb445b1e-0fc5-4119-83c5-7598ff9fe3da; Hm_lpvt_f00f67093ce2f38f215010b699629083=1710169283; _gat_gtag_UA_199934072_2=1; _ga_FZMMH98S83=GS1.1.1710169282.5.0.1710169282.0.0.0; _ga=GA1.1.1141727904.1708513693; _ga_PFYW0QLV3P=GS1.1.1710169282.5.0.1710169282.0.0.0",
+  "sec-fetch-dest": "document",
+  "sec-fetch-mode": "navigate",
+  "sec-fetch-site": "none",
+  "sec-fetch-user": "?1",
+  "upgrade-insecure-requests": "1",
+  "user-agent":
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
+});
 const client = {
   async get<T>(...args: Parameters<typeof _client.get>) {
     const r = await _client.get(...args);
