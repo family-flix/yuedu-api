@@ -84,9 +84,10 @@ model searched_novel {
         created DateTime @default(now())
         updated DateTime @default(now())
 
-        unique_id String
-        name      String
-        url       String
+        unique_id     String
+        name          String
+        url           String
+        chapter_count Int    @default(0)
 
         profile_id String
         profile    novel_profile      @relation(fields: [profile_id], references: [id])

@@ -15,10 +15,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const { authorization } = req.headers;
   const {
     novel_id,
+    prev_marker = "",
     next_marker = "",
     page_size = 100,
   } = req.body as Partial<{
     novel_id: string;
+    prev_marker: string;
     next_marker: string;
     page_size: number;
   }>;

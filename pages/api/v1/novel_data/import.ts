@@ -156,7 +156,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           await store.prisma.searched_novel.create({
             data: {
               ...rest,
-              user_id: user.id,
             },
           });
           return;
@@ -173,7 +172,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           await store.prisma.searched_chapter.create({
             data: {
               ...rest,
-              user_id: user.id,
             },
           });
           return;

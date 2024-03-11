@@ -81,13 +81,26 @@ async function main() {
           return;
         }
         const chapters = r3.data.chapters;
+        if (searched_novel_record.chapter_count === chapters.length) {
+          console.log(`'${name}' 没有新增章节`);
+          return;
+        }
         if (chapters.length === 0) {
           console.log(`'${name}' 暂无章节`);
           return;
         }
         console.log(`'${name}' 共 ${chapters.length} 章节`);
-        for (let i = 0; i < chapters.length; i += 1) {
-          const chapter = chapters[i];
+        await store.prisma.searched_novel.update({
+          where: {
+            id: searched_novel_record.id,
+          },
+          data: {
+            chapter_count: chapters.length,
+          },
+        });
+        const added_chapters = chapters.slice(searched_novel_record.chapter_count - 5, chapters.length);
+        for (let i = 0; i < added_chapters.length; i += 1) {
+          const chapter = added_chapters[i];
           await (async () => {
             const existing = await store.prisma.searched_chapter.findFirst({
               where: {
