@@ -62,7 +62,7 @@ export class QidianClient {
     // const dataSource = m(html)(extract.search.data_source, "g");
     const json_str = html.match(regexp1);
     if (!json_str) {
-      return Result.Err("没有匹配到列表数据");
+      return Result.Err("系统异常", 1001);
     }
     const json_r = parseJSONStr<{
       pageContext: {
