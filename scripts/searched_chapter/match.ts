@@ -54,7 +54,11 @@ async function main() {
           novel_chapter_profiles: true,
         },
       },
-      chapters: true,
+      chapters: {
+        orderBy: {
+          order: "asc",
+        },
+      },
     },
   });
   for (let i = 0; i < searched_novels.length; i += 1) {

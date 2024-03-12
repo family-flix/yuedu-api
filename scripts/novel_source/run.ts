@@ -11,6 +11,7 @@ import { Bg3Source } from "@/domains/novel_source/sources/bg3";
 import { BrowserHelper } from "@/domains/browser";
 import { NovelSourceClient } from "@/domains/novel_source/types";
 import { MingZWSource } from "@/domains/novel_source/sources/mingzw";
+import { parse_name_of_chapter } from "@/utils/parse_name_of_chapter";
 
 async function main() {
   const OUTPUT_PATH = process.env.OUTPUT_PATH;
@@ -127,13 +128,15 @@ async function main() {
               const content = r4.data;
               const contents = content.join("\n");
               console.log(chapter.name, "成功获取到章节内容，内容总字数", contents.length);
+              const { episode } = parse_name_of_chapter(chapter.name);
+              const num = Number(episode.replace(/^E/, ""));
               await store.prisma.searched_chapter.create({
                 data: {
                   id: r_id(),
                   unique_id: chapter.id,
                   name: chapter.name,
                   url: chapter.url,
-                  order: i,
+                  order: episode ? num : i,
                   content: contents,
                   searched_novel_id: searched_novel_record.id,
                 },
