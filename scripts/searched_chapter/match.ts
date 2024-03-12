@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import { Application } from "@/domains/application";
 import { r_id } from "@/utils";
 import { parse_name_of_chapter } from "@/utils/parse_name_of_chapter";
+import { match_chapter } from "@/utils/match_chapter";
 
 async function main() {
   const OUTPUT_PATH = process.env.OUTPUT_PATH;
@@ -70,52 +71,29 @@ async function main() {
     for (let j = 0; j < searched_chapters.length; j += 1) {
       const searched_chapter = searched_chapters[j];
       const { id, name } = searched_chapter;
-      console.log(`${j + 1}、`, name);
-      const chapter_name = name.replace(/,/g, "，").replace(/:/g, "：").replace(/;/g, "；");
-      const parsed = format_chapter_name(name);
+      // const chapter_name = name.replace(/,/g, "，").replace(/:/g, "：").replace(/;/g, "；");
+      // const parsed = format_chapter_name(name);
       await (async () => {
         if (searched_chapter.chapter_profile_id) {
           return;
         }
-        const matched = (() => {
-          let a = chapters.find((chapter) => {
-            return chapter.name === name;
-          });
-          if (a) {
-            return a;
-          }
-          a = chapters.find((chapter) => {
-            return chapter.name === chapter_name;
-          });
-          if (a) {
-            return a;
-          }
-          a = chapters.find((chapter) => {
-            return chapter.name.includes(parsed.name);
-          });
-          if (a) {
-            return a;
-          }
-          a = chapters.find((chapter) => {
-            return chapter.order === parsed.order;
-          });
-          return null;
-        })();
-        if (!matched) {
-          console.log("没有匹配到章节详情");
+        // console.log(`${j + 1}、`, name);
+        const r = match_chapter(searched_chapter, chapters);
+        if (r.error) {
+          console.log(r.error.message);
           await store.prisma.searched_chapter.update({
             where: { id },
             data: {
               error: JSON.stringify({
                 text: "没有匹配到章节详情",
-                chapter_profile_name: parsed.name,
               }),
             },
           });
           return;
         }
+        const matched = r.data;
         // const chapter = get_novel_chapter(matched);
-        console.log("成功匹配到章节详情", matched.name, matched.id);
+        console.log("成功匹配到章节详情", matched.name);
         await store.prisma.searched_chapter.update({
           where: { id },
           data: {
