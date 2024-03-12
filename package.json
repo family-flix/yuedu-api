@@ -39,6 +39,7 @@
     "@peculiar/webcrypto": "^1.4.5",
     "@prisma/client": "4.16.2",
     "axios": "^1.6.7",
+    "cheerio": "^1.0.0-rc.12",
     "dayjs": "^1.11.10",
     "debug": "^4.3.4",
     "formidable": "^3.5.1",

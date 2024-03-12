@@ -10,6 +10,7 @@ import { bytes_to_size, parseJSONStr, r_id } from "@/utils";
 import { Bg3Source } from "@/domains/novel_source/sources/bg3";
 import { BrowserHelper } from "@/domains/browser";
 import { NovelSourceClient } from "@/domains/novel_source/types";
+import { MingZWSource } from "@/domains/novel_source/sources/mingzw";
 
 async function main() {
   const OUTPUT_PATH = process.env.OUTPUT_PATH;
@@ -23,17 +24,17 @@ async function main() {
   });
   const store = app.store;
   console.log("Start");
-  const novel_clients: Record<string, new (props: { unique_id: string; browser: BrowserHelper }) => NovelSourceClient> =
-    {
-      bg3: Bg3Source,
-    };
+  const novel_clients: Record<string, new (props: { unique_id: string }) => NovelSourceClient> = {
+    // bg3: Bg3Source,
+    mingzw: MingZWSource,
+  };
   const novel_sources = await store.prisma.novel_source.findMany({});
-  const r = await BrowserHelper.Launch();
-  if (r.error) {
-    console.log(r.error.message);
-    return;
-  }
-  const browser = r.data;
+  // const r = await BrowserHelper.Launch();
+  // if (r.error) {
+  //   console.log(r.error.message);
+  //   return;
+  // }
+  // const browser = r.data;
   const novels = await store.prisma.novel_profile.findMany({});
   for (let i = 0; i < novels.length; i += 1) {
     const novel_profile = novels[i];
@@ -45,7 +46,7 @@ async function main() {
         if (!Client) {
           return;
         }
-        const source = new Client({ unique_id: novel_source.unique_id, browser });
+        const source = new Client({ unique_id: novel_source.unique_id });
         const r2 = await source.search(name);
         if (r2.error) {
           console.log(r2.error.message);
@@ -134,7 +135,7 @@ async function main() {
       })();
     }
   }
-  await browser.destroy();
+  // await browser.destroy();
   console.log("Success");
 }
 

@@ -12,29 +12,30 @@ interface BrowserHelperProps {
   browser: puppeteer.Browser;
 }
 export class BrowserHelper {
-  static async Launch(props: Partial<{ headless: boolean }> = {}) {
-    const { headless = false } = props;
+  static async Launch(props: Partial<{ headless: boolean; proxy: boolean }> = {}) {
+    const { headless = false, proxy } = props;
     const browser = await puppeteer.launch({
-      ...(() => {
-        if (headless) {
-          return {
-            headless: true,
-          };
-        }
-        return {
-          executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-          headless: false,
-        };
-      })(),
+      headless: true,
+      // ...(() => {
+      //   if (headless) {
+      //     return {
+      //       headless: true,
+      //     };
+      //   }
+      //   return {
+      //     executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      //     headless: false,
+      //   };
+      // })(),
       ignoreHTTPSErrors: true,
-      devtools: true,
+      // devtools: true,
       args: [
         // "--no-sandbox",
         // "--single-process",
         // "--no-zygote",
         // "--disable-setuid-sandbox",
-        "--proxy-server=socks5://127.0.0.1:7890",
-      ],
+        proxy ? `--proxy-server=${proxy}` : "",
+      ].filter(Boolean),
     });
     return Result.Ok(new BrowserHelper({ browser }));
   }

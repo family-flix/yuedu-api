@@ -22,33 +22,43 @@ async function main() {
   });
   const store = app.store;
   console.log("Start");
-  const novel_source = {
-    unique_id: "bg3",
-    name: "天天看小说",
-    url: "https://cn.ttkan.co",
-  };
+  const novel_sources = [
+    {
+      unique_id: "bg3",
+      name: "天天看小说",
+      url: "https://cn.ttkan.co",
+    },
+    {
+      unique_id: "mingzw",
+      name: "明治屋",
+      url: "https://www.mingzw.net",
+    },
+  ];
   const users = await store.prisma.user.findMany({});
   for (let i = 0; i < users.length; i += 1) {
     const user = users[i];
-    await (async () => {
-      const existing = await store.prisma.novel_source.findFirst({
-        where: {
-          unique_id: novel_source.unique_id,
-        },
-      });
-      if (existing) {
-        return;
-      }
-      await store.prisma.novel_source.create({
-        data: {
-          id: r_id(),
-          unique_id: novel_source.unique_id,
-          name: novel_source.name,
-          url: novel_source.url,
-          user_id: user.id,
-        },
-      });
-    })();
+    for (let j = 0; j < novel_sources.length; j += 1) {
+      const novel_source = novel_sources[j];
+      await (async () => {
+        const existing = await store.prisma.novel_source.findFirst({
+          where: {
+            unique_id: novel_source.unique_id,
+          },
+        });
+        if (existing) {
+          return;
+        }
+        await store.prisma.novel_source.create({
+          data: {
+            id: r_id(),
+            unique_id: novel_source.unique_id,
+            name: novel_source.name,
+            url: novel_source.url,
+            user_id: user.id,
+          },
+        });
+      })();
+    }
   }
   console.log("Success");
 }

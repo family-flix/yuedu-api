@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 
 import factory from "debug";
-import cheerio, { Cheerio, load } from "cheerio";
+import { load } from "cheerio";
 
 import { BrowserHelper } from "@/domains/browser/index";
 import { HttpClientCore } from "@/domains/http_client/index";
@@ -27,8 +27,8 @@ type SourceProps = {
   unique_id: string;
   browser?: BrowserHelper;
 };
-export class Bg3Source extends NovelSourceClient {
-  static hostname = "https://cn.ttkan.co";
+export class MingZWSource extends NovelSourceClient {
+  static hostname = "https://www.mingzw.net";
   // static async Start(props: { id: string; unique_id: string; browser: BrowserHelper }) {
   //   const { id, unique_id, browser } = props;
   //   const r = await BrowserHelper.Launch();
@@ -40,10 +40,6 @@ export class Bg3Source extends NovelSourceClient {
 
   unique_id: string;
   token = "";
-
-  pages = {
-    home: "https://cn.ttkan.co",
-  };
 
   browser?: BrowserHelper;
   client: HttpClientCore;
@@ -65,41 +61,34 @@ export class Bg3Source extends NovelSourceClient {
     //   return Result.Err(r.error.message);
     // }
     // const page = r.data;
-    const r = await this.client.get<string>(`https://cn.ttkan.co/novel/search?q=${encodeURIComponent(keyword)}`);
+    const r = await this.client.get<string>(`https://www.mingzw.net/mzwlist/${encodeURIComponent(keyword)}.html`);
     if (r.error) {
       return Result.Err(r.error.message);
     }
     const $ = load(r.data);
-    // const $novels = Array.from($('.novel_cell'));
-    // const books_html = $novels.map((elm) => elm.te)
     const books_html: string[] = [];
-    $(".novel_cell").each((i, el) => {
+    $(".figure-horizontal").each((i, el) => {
       const text = $(el).html();
       if (text) {
         books_html.push(text);
       }
     });
-    // const books_html = await page.$$eval(".novel_cell", (elements) => {
-    //   return elements.map((elm) => {
-    //     return elm.outerHTML;
-    //   });
-    // });
     const books = books_html
       .map((item) => {
-        const url_r = /href="(\/novel\/[^"]{1,})"/;
+        const url_r = /href="(\/mzwbook\/[^"]{1,})"/;
         const url = item.match(url_r);
-        const name_r = /<h3[^>]{1,}>([^<]{1,})<\/h3/;
+        const name_r = /title="([^"]{1,})">/;
         const name = item.match(name_r);
         return {
           id: (() => {
             if (!url) {
               return null;
             }
-            const r = url[1].split("/").pop();
+            const r = url[1].match(/[0-9]{1,}/);
             if (!r) {
               return null;
             }
-            return r;
+            return r[0];
           })(),
           name: name ? name[1] : null,
           url: url ? url[1] : null,
@@ -128,39 +117,42 @@ export class Bg3Source extends NovelSourceClient {
   }
   async fetch_chapters(novel: SearchedNovel) {
     const { id } = novel;
-    this.client.setHeaders({
-      authority: "cn.ttkan.co",
-      accept: "application/json",
-      "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-      "amp-same-origin": "true",
-      cookie: "_ga=amp-r-VOErdfsjWlgp3Ets8PUg",
-      referer: "https://cn.ttkan.co/novel/chapters/daoguiyixian-huweidebi",
-      "sec-fetch-dest": "empty",
-      "sec-fetch-mode": "cors",
-      "sec-fetch-site": "same-origin",
-      "user-agent":
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
-    });
-    const r = await this.client.get<{ items: { chapter_id: number; chapter_name: string }[] }>(
-      "https://cn.ttkan.co/api/nq/amp_novel_chapters",
-      {
-        language: "cn",
-        novel_id: id,
-        __amp_source_origin: "https://cn.ttkan.co",
-      }
-    );
+    const r = await this.client.get<string>(`https://www.mingzw.net/mzwchapter/${id}.html`);
     if (r.error) {
       return Result.Err(r.error.message);
     }
-    const chapters = r.data.items.map((chapter) => {
-      const { chapter_id, chapter_name } = chapter;
-      const url = `https://cn.bg3.co/novel/pagea/${id}_${chapter_id}.html`;
-      return {
-        id: [id, chapter_id].join("/"),
-        name: chapter_name,
-        url,
-      };
-    }) as SearchedNovelChapter[];
+    const $ = load(r.data);
+    const chapters_html: string[] = [];
+    $(".content ul li").each((i, el) => {
+      const text = $(el).html();
+      if (text) {
+        chapters_html.push(text);
+      }
+    });
+    const chapters = chapters_html
+      .map((item) => {
+        const url_r = /href="(\/mzwread\/[^"]{1,})"/;
+        const url = item.match(url_r);
+        const name_r = /">([^<]{1,})<\/a>/;
+        const name = item.match(name_r);
+        return {
+          id: (() => {
+            if (!url) {
+              return null;
+            }
+            const r = url[1].match(/[0-9]{1,}_([0-9]{1,})/);
+            if (!r) {
+              return null;
+            }
+            return r[1];
+          })(),
+          name: name ? name[1] : null,
+          url: url ? [MingZWSource.hostname, url[1]].join("") : null,
+        };
+      })
+      .filter((chapter) => {
+        return chapter.id && chapter.name && chapter.url;
+      }) as SearchedNovelChapter[];
     return Result.Ok({
       chapters,
     });
@@ -175,35 +167,24 @@ export class Bg3Source extends NovelSourceClient {
     //     const url2 = `https://cn.bg3.co/novel/pagea/${id}_${page_num}.html`;
     //     console.log("[]fetch_content - before goto url2", url);
     console.log("fetch_content - before goto", url);
-    const proxy = "https://proxy.f1x.fun/api/proxy/?u=";
-    const r = await this.client.get<string>([proxy, url].join(""));
+    const r = await this.client.get<string>(url);
     if (r.error) {
       return Result.Err(r.error.message);
     }
     // const page = r.data;
     const $ = load(r.data);
-    console.log(r.data);
-    const $content = await $(".content");
+    const $content = await $(".contents");
     if (!$content) {
       return Result.Err("没有找到 .content");
     }
     const outerHTML = $content.html();
-    console.log(outerHTML);
     if (!outerHTML) {
       return Result.Err("没有 html");
     }
-    const r2 = outerHTML.match(/<p[^>]{1,}>([^<]{1,})<\/p/g);
-    if (!r2) {
-      return Result.Err("没有找到正文");
-    }
+    const r2 = outerHTML.replace(/<p>/g, "").replace(/<\/p>/g, "\n");
     const contents = r2
-      .map((text) => {
-        const rr = text.match(/<p[^>]{1,}>([^<]{1,})<\/p/);
-        if (rr) {
-          return rr[1];
-        }
-        return null;
-      })
+      .split("\n")
+      .map((text) => text.trim())
       .filter(Boolean) as string[];
     return Result.Ok(contents);
   }
