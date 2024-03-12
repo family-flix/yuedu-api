@@ -6,7 +6,7 @@ import { store } from "@/store/index";
 import { MingZWSource } from "@/domains/novel_source/sources/mingzw";
 
 async function main() {
-  const source = new MingZWSource({ unique_id: "bg3" });
+  const source = new MingZWSource({ unique_id: "mingzw" });
   const r2 = await source.search("从斩妖除魔开始长生不死");
   // await source.destroy();
   if (r2.error) {
@@ -30,25 +30,26 @@ async function main() {
   console.log(`共 ${chapters.length} 章节`);
   console.log(chapters[0]);
 
-  const r4 = await source.fetch_content(chapters[0]);
-  if (r4.error) {
-    console.log(r4.error.message);
-    return;
-  }
-  const content = r4.data;
-  console.log(content);
-  // for (let i = 0; i < chapters.length; i += 1) {
-  //   await (async () => {
-  //     const chapter = chapters[i];
-  //     const r4 = await source.fetch_content(chapter);
-  //     if (r4.error) {
-  //       console.log(r4.error.message);
-  //       return;
-  //     }
-  //     const content = r4.data;
-  //     console.log(chapter.name, "成功获取到章节内容，内容总字数", content.length);
-  //   })();
+  // const r4 = await source.fetch_content(chapters[0]);
+  // if (r4.error) {
+  //   console.log(r4.error.message);
+  //   return;
   // }
+  // const content = r4.data;
+  // console.log(content);
+  for (let i = 0; i < chapters.length; i += 1) {
+    await (async () => {
+      const chapter = chapters[i];
+      const r4 = await source.fetch_content(chapter);
+      if (r4.error) {
+        console.log(r4.error.message);
+        return;
+      }
+      const content = r4.data;
+      console.log(chapter.name, "成功获取到章节内容，内容总字数", content.length);
+      console.log(content);
+    })();
+  }
   await source.finish();
 }
 
