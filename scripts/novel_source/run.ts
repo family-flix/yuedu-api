@@ -82,7 +82,10 @@ async function main() {
           return;
         }
         const chapters = r3.data.chapters;
-        if (searched_novel_record.chapter_count === chapters.length) {
+        const chapter_count = await store.prisma.searched_chapter.count({
+          where: { searched_novel_id: searched_novel.id },
+        });
+        if (chapter_count === chapters.length) {
           console.log(`'${name}' 没有新增章节`);
           return;
         }
@@ -119,6 +122,8 @@ async function main() {
               return;
             }
             const content = r4.data;
+            const contents = content.join("\n");
+            console.log(chapter.name, "成功获取到章节内容，内容总字数", contents.length);
             await store.prisma.searched_chapter.create({
               data: {
                 id: r_id(),
@@ -126,7 +131,7 @@ async function main() {
                 name: chapter.name,
                 url: chapter.url,
                 order: i,
-                content: content.join("\n"),
+                content: contents,
                 searched_novel_id: searched_novel_record.id,
               },
             });

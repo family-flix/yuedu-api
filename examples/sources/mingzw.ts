@@ -21,14 +21,14 @@ async function main() {
     await source.finish();
     return;
   }
-  const chapters = r3.data.chapters;
+  const chapters = r3.data.chapters.reverse();
   if (chapters.length === 0) {
     console.log("该小说暂无章节");
     await source.finish();
     return;
   }
   console.log(`共 ${chapters.length} 章节`);
-  console.log(chapters[0]);
+  // console.log(chapters[0]);
 
   // const r4 = await source.fetch_content(chapters[0]);
   // if (r4.error) {
@@ -47,7 +47,7 @@ async function main() {
       }
       const content = r4.data;
       console.log(chapter.name, "成功获取到章节内容，内容总字数", content.length);
-      console.log(content);
+      // console.log(content);
     })();
   }
   await source.finish();
