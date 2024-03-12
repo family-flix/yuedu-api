@@ -102,9 +102,8 @@ async function main() {
             chapter_count: chapters.length,
           },
         });
-        const added_chapters = chapters.slice(searched_novel_record.chapter_count - 5, chapters.length);
-        for (let i = 0; i < added_chapters.length; i += 1) {
-          const chapter = added_chapters[i];
+        for (let i = 0; i < chapters.length; i += 1) {
+          const chapter = chapters[i];
           await (async () => {
             const existing = await store.prisma.searched_chapter.findFirst({
               where: {
