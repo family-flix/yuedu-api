@@ -30,4 +30,13 @@ describe("特殊的集数", () => {
       episode_name: "赤鬃白玉兔",
     });
   });
+
+  test("第三百一十一章 沈逸的酬谢", () => {
+    const name = "第三百一十一章 沈逸的酬谢";
+    const result = parse_name_of_chapter(name);
+    expect(result).toStrictEqual({
+      episode: "E311",
+      episode_name: "沈逸的酬谢",
+    });
+  });
 });

@@ -82,6 +82,9 @@ async function main() {
           if (a) {
             return a;
           }
+          a = chapters.find((chapter) => {
+            return chapter.order === parsed.order;
+          });
           return null;
         })();
         if (!matched) {
@@ -116,7 +119,7 @@ async function main() {
 function format_chapter_name(name: string) {
   const { episode, episode_name } = parse_name_of_chapter(name, ["episode", "episode_name"]);
   return {
-    order: episode,
+    order: Number(episode.replace(/^E/, "")),
     name: episode_name,
   };
 }

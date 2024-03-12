@@ -30,10 +30,10 @@ export function parse_name_of_chapter(
   }[] = []
 ) {
   function log(...args: unknown[]) {
-    if (!filename.includes("白玉")) {
+    if (!filename.includes("沈逸的酬谢")) {
       return;
     }
-    // console.log(...args);
+    console.log(...args);
   }
   // @ts-ignore
   const result: Record<VideoKeys, string> = keys
@@ -522,6 +522,12 @@ export function format_episode_number(n: string, options: { log: (...args: unkno
       return number;
     }
     return `E${matched[1]}-${matched[2]}`;
+  }
+  const m1 = number.match(/第([\u4e00-\u9fa5]{1,})[章集話话期局场]/);
+  if (m1) {
+    const n = m1[1];
+    const num = chinese_num_to_num(n);
+    return `E${num}`;
   }
   // 第01-02话 处理成 E01-E02
   const matched = number.match(/[0-9]{1,}/);
