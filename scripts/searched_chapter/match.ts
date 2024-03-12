@@ -67,6 +67,7 @@ async function main() {
       const searched_chapter = searched_chapters[j];
       const { id, name } = searched_chapter;
       console.log(`${j + 1}、`, name);
+      const chapter_name = name.replace(/,/g, "，").replace(/:/g, "：").replace(/;/g, "；");
       const parsed = format_chapter_name(name);
       await (async () => {
         if (searched_chapter.chapter_profile_id) {
@@ -75,6 +76,12 @@ async function main() {
         const matched = (() => {
           let a = chapters.find((chapter) => {
             return chapter.name === name;
+          });
+          if (a) {
+            return a;
+          }
+          a = chapters.find((chapter) => {
+            return chapter.name === chapter_name;
           });
           if (a) {
             return a;
