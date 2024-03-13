@@ -77,7 +77,7 @@ async function main() {
         if (searched_chapter.chapter_profile_id) {
           return;
         }
-        // console.log(`${j + 1}、`, name);
+        console.log(`${j + 1}、`, name);
         const r = match_chapter(searched_chapter, chapters);
         if (r.error) {
           console.log(r.error.message);

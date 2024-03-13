@@ -41,9 +41,9 @@ async function main() {
     const novel_profile = novels[i];
     const { name } = novel_profile;
     await (async () => {
-      if (name !== "从斩妖除魔开始长生不死") {
-        return;
-      }
+      // if (name !== "从斩妖除魔开始长生不死") {
+      //   return;
+      // }
       for (let j = 0; j < novel_sources.length; j += 1) {
         const novel_source = novel_sources[j];
         await (async () => {

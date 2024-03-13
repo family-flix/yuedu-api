@@ -57,7 +57,11 @@ async function main() {
   //   return;
   // }
   // const browser = r.data;
-  const novels = await store.prisma.novel_profile.findMany({});
+  const novels = await store.prisma.novel_profile.findMany({
+    where: {
+      in_production: 1,
+    },
+  });
   const client = new QidianClient();
 
   for (let j = 0; j < novels.length; j += 1) {

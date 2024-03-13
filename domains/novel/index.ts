@@ -140,9 +140,6 @@ export class NovelCore {
       const range = get_chapter_ranges(novel_chapter.order, { step: 102, max: chapter_count });
       const chapters = await this.store.prisma.novel_chapter_profile.findMany({
         where: {
-          files: {
-            some: {},
-          },
           order: {
             gte: range[0],
             lte: range[1],
