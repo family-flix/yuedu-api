@@ -474,6 +474,18 @@ export function format_season_number(n: string, prefix = "S") {
   return e;
 }
 
+export function get_episode_num(n: string) {
+  if (!n) {
+    return null;
+  }
+  const num = n.match(/[0-9]{1,}$/);
+  if (!num) {
+    return null;
+  }
+  const m = Number(num);
+  return m;
+}
+
 function format_episode_number2(n: string) {
   let result = n.replace(/[\.\(\)]/g, "").trim();
   if (result.match(/^第[0-9]{1,}/)) {

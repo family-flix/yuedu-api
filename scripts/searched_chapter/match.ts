@@ -108,12 +108,4 @@ async function main() {
   console.log("Success");
 }
 
-function format_chapter_name(name: string) {
-  const { episode, episode_name } = parse_name_of_chapter(name, ["episode", "episode_name"]);
-  return {
-    order: Number(episode.replace(/^E/, "")),
-    name: episode_name,
-  };
-}
-
 main();
