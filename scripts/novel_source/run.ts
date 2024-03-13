@@ -12,6 +12,7 @@ import { BrowserHelper } from "@/domains/browser";
 import { NovelSourceClient } from "@/domains/novel_source/types";
 import { MingZWSource } from "@/domains/novel_source/sources/mingzw";
 import { parse_name_of_chapter } from "@/utils/parse_name_of_chapter";
+import { DXMWXSource } from "@/domains/novel_source/sources/dxmwx";
 
 async function main() {
   const OUTPUT_PATH = process.env.OUTPUT_PATH;
@@ -28,6 +29,7 @@ async function main() {
   const novel_clients: Record<string, new (props: { unique_id: string }) => NovelSourceClient> = {
     // bg3: Bg3Source,
     mingzw: MingZWSource,
+    dxmwx: DXMWXSource,
   };
   const novel_sources = await store.prisma.novel_source.findMany({});
   // const r = await BrowserHelper.Launch();

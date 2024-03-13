@@ -33,6 +33,11 @@ async function main() {
       name: "明治屋",
       url: "https://www.mingzw.net",
     },
+    {
+      unique_id: "dxmwx",
+      name: "大熊猫文学网",
+      url: "https://www.dxmwx.org/",
+    },
   ];
   const users = await store.prisma.user.findMany({});
   for (let i = 0; i < users.length; i += 1) {
