@@ -172,7 +172,7 @@ export class ScheduleTask {
     if (chapters.length === 0) {
       return Result.Err("暂无章节");
     }
-    console.log(`'${name}' 共 ${chapters.length} 章节`);
+    console.log(`'${searched_novel.name}' 共 ${chapters.length} 章节`);
     await this.store.prisma.searched_novel.update({
       where: {
         id: searched_novel_record.id,
@@ -190,7 +190,7 @@ export class ScheduleTask {
           },
         });
         if (existing) {
-          console.log(`'${name}' - ${chapter.name} 章节 已存在`, { id: chapter.id });
+          console.log(`'${searched_novel.name}' - ${chapter.name} 章节 已存在`, { id: chapter.id });
           // 已经存在就忽略，另外有地方主动刷新章节
           return;
         }
