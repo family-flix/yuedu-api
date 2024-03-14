@@ -7,6 +7,7 @@
     "dev": "next dev --port 3200",
     "start": "next start",
     "build": "next build",
+    "schedule": "vite-node scripts/schedule.ts",
     "db": "npx prisma studio",
     "check": "tsc --noEmit"
   },
