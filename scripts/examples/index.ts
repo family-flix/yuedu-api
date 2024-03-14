@@ -4,7 +4,7 @@ import axios from "axios";
 import { store } from "@/store/index";
 
 import { QidianClient } from "@/domains/novel_profile/qidian";
-import { Bg3Source } from "../domains/novel_source/sources/bg3";
+import { Bg3Source } from "../../domains/novel_source/sources/bg3";
 import { r_id } from "@/utils";
 import { BrowserHelper } from "@/domains/browser";
 

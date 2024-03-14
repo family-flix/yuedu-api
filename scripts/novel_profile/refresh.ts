@@ -1,14 +1,7 @@
 /**
  * 遍历更新中的小说，使用书源获取小说正文
  */
-import dayjs from "dayjs";
-
-import { CollectionTypes, MediaTypes } from "@/constants";
 import { Application } from "@/domains/application";
-import { walk_model_with_cursor } from "@/domains/store/utils";
-import { bytes_to_size, parseJSONStr, r_id } from "@/utils";
-import { Bg3Source } from "@/domains/novel_source/sources/bg3";
-import { BrowserHelper } from "@/domains/browser";
 import { NovelSourceClient } from "@/domains/novel_source/types";
 import { MingZWSource } from "@/domains/novel_source/sources/mingzw";
 import { QidianClient } from "@/domains/novel_profile/qidian";
@@ -26,10 +19,6 @@ async function main() {
   });
   const store = app.store;
   console.log("Start");
-  const novel_clients: Record<string, new (props: { unique_id: string }) => NovelSourceClient> = {
-    // bg3: Bg3Source,
-    mingzw: MingZWSource,
-  };
   async function get_novel_section_profile(values: SearchedNovelSectionProfile, novel_profile: { id: string }) {
     const { unique_id, name, order } = values;
     const section = await store.prisma.novel_section_profile.findFirst({

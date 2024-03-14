@@ -32,12 +32,6 @@ async function main() {
     dxmwx: DXMWXSource,
   };
   const novel_sources = await store.prisma.novel_source.findMany({});
-  // const r = await BrowserHelper.Launch();
-  // if (r.error) {
-  //   console.log(r.error.message);
-  //   return;
-  // }
-  // const browser = r.data;
   const novels = await store.prisma.novel_profile.findMany({});
   for (let i = 0; i < novels.length; i += 1) {
     const novel_profile = novels[i];

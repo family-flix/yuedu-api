@@ -1,15 +1,13 @@
 import dayjs from "dayjs";
 
-import { DEFAULT_STATS, FileType, MediaErrorTypes, MediaTypes, ReportTypes, ResourceSyncTaskStatus } from "@/constants";
 import { DatabaseStore } from "@/domains/store";
-import { Statistics } from "@/domains/store/types";
+import { DataStore, Statistics } from "@/domains/store/types";
 import { User, UserSettings, UserUniqueID } from "@/domains/user";
 import { walk_model_with_cursor } from "@/domains/store/utils";
 import { parse_token } from "@/domains/user/utils";
-// import { Drive } from "@/domains/drive/v2";
-// import { DriveTypes } from "@/domains/drive/constants";
-import { Result } from "@/types";
-import { parseJSONStr, r_id } from "@/utils";
+import { DEFAULT_STATS, FileType } from "@/constants/index";
+import { Result } from "@/types/index";
+import { parseJSONStr, r_id } from "@/utils/index";
 
 export class Administrator extends User {
   static async New(token: string | undefined, store: DatabaseStore) {
@@ -56,8 +54,8 @@ export class Administrator extends User {
     });
     return Result.Ok(user);
   }
-  static async Get(body: { id: string }, store: DatabaseStore) {
-    const { id } = body;
+  static async Get(body: { id: string; store: DataStore }) {
+    const { id, store } = body;
     const existing = await store.prisma.user.findUnique({
       where: { id },
       include: {
@@ -98,7 +96,7 @@ export class Administrator extends User {
     token: string;
     settings?: UserSettings | null;
     statistics: Statistics;
-    store: DatabaseStore;
+    store: DataStore;
   }) {
     super(props);
 

@@ -7,7 +7,7 @@ import { MingZWSource } from "@/domains/novel_source/sources/mingzw";
 
 async function main() {
   const source = new MingZWSource({ unique_id: "mingzw" });
-  const r2 = await source.search("从斩妖除魔开始长生不死");
+  const r2 = await source.search("炮火弧线");
   // await source.destroy();
   if (r2.error) {
     console.log(r2.error.message);
