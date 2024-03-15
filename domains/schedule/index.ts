@@ -258,7 +258,6 @@ export class ScheduleTask {
           console.log(`${j + 1}、`, name);
           const r = match_chapter(searched_chapter, chapters);
           if (r.error) {
-            console.log(r.error.message);
             await this.store.prisma.searched_chapter.update({
               where: { id },
               data: {

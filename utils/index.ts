@@ -355,3 +355,25 @@ export function compare_versions_with_timestamp(version1: string, version2: stri
 
   return 0;
 }
+
+export function groupIntoSubArr<T>(arr: T[], n: number) {
+  let i = 0;
+  let index = 0;
+  let step = 0;
+  const groups = new Array(n);
+  while (i < (arr.length / n) + 1) {
+    index = 0;
+    let end = 0;
+    while (index < n) {
+      end = step * n + index;
+      const value = arr[step * n + index];
+      console.log("inner", index, step, end);
+      groups[index] = groups[index] || [];
+      groups[index].push(value);
+      index += 1;
+    }
+    i += 1;
+    step += 1;
+  }
+  return groups.map((group) => group.filter(Boolean));
+}
