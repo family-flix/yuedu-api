@@ -19,16 +19,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const { novel_id } = req.body as Partial<{
     novel_id: string;
   }>;
-
   const t_res = await User.New(authorization, store);
   if (t_res.error) {
     return e(t_res);
   }
-
   const user = t_res.data;
   const where: ModelQuery<"searched_novel"> = {
     id: novel_id,
   };
+  const page_size = 100;
+  const args = await store.build_extra_args({ page_size });
   const r = await store.prisma.searched_novel.findFirst({
     where,
     include: {
@@ -38,10 +38,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         },
       },
       chapters: {
-        select: {
-          id: true,
-          name: true,
+        include: {
+          chapter_profile: {
+            include: {
+              novel_profile: true,
+            },
+          },
         },
+        orderBy: {
+          order: "asc",
+        },
+        ...args,
       },
       source: true,
     },
@@ -49,20 +56,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   if (!r) {
     return e(Result.Err("没有匹配的记录"));
   }
-  const { profile, source, chapters } = r;
+  const { id, name, profile, source, chapters } = r;
   const data = {
-    name: profile.name,
-    overview: profile.name,
+    id,
+    name,
+    profile: {
+      name: profile.name,
+      cover_path: profile.cover_path,
+      overview: profile.name,
+    },
     source: {
       name: source.name,
     },
-    chapters: chapters.map((chapter) => {
-      const { id, name } = chapter;
-      return {
-        id,
-        name,
-      };
-    }),
+    chapter: {
+      next_marker: store.get_next_marker(chapters, { page_size }),
+      list: chapters.slice(0, page_size).map((chapter) => {
+        const { id, name, chapter_profile } = chapter;
+        return {
+          id,
+          name,
+          profile: chapter_profile
+            ? {
+                name: chapter_profile.name,
+                novel_name: chapter_profile.novel_profile.name,
+              }
+            : null,
+        };
+      }),
+    },
   };
   res.status(200).json({
     code: 0,

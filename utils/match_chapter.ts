@@ -1,4 +1,5 @@
-import { Result } from "@/types";
+import { Result } from "@/types/index";
+
 import { parse_name_of_chapter } from "./parse_name_of_chapter";
 
 export function match_chapter(
@@ -37,13 +38,14 @@ export function match_chapter(
     if (a) {
       return a;
     }
-    a = chapters.find((chapter) => {
-      return chapter.order === parsed.order;
-    });
-    //     console.log("5", a);
-    if (a) {
-      return a;
-    }
+    // 只能靠名字匹配，order 完全是乱的，包括从文件名解析得到的 第n章。
+    // 因为小说可以分多个篇，每个篇开始，章节数又从 1 开始
+    // a = chapters.find((chapter) => {
+    //   return chapter.order === parsed.order;
+    // });
+    // if (a) {
+    //   return a;
+    // }
     return null;
   })();
   if (!matched) {

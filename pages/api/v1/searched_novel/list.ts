@@ -46,11 +46,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const data = {
     next_marker: result.next_marker,
     list: result.list.map((novel) => {
-      const { id, profile, source } = novel;
+      const { id, name, profile, source } = novel;
       return {
         id,
-        name: profile.name,
-        cover_path: profile.cover_path,
+        name,
+        profile: {
+          name: profile.name,
+          cover_path: profile.cover_path,
+        },
         source: {
           name: source.name,
         },

@@ -39,4 +39,20 @@ describe("特殊的集数", () => {
       episode_name: "沈逸的酬谢",
     });
   });
+  test("116.第116章 真正的凝丹淬体法", () => {
+    const name = "116.第116章 真正的凝丹淬体法";
+    const result = parse_name_of_chapter(name);
+    expect(result).toStrictEqual({
+      episode: "E116",
+      episode_name: "真正的凝丹淬体法",
+    });
+  });
+  test("120.第120章 满载而归（求首订）", () => {
+    const name = "120.第120章 满载而归（求首订）";
+    const result = parse_name_of_chapter(name);
+    expect(result).toStrictEqual({
+      episode: "E120",
+      episode_name: "满载而归（求首订）",
+    });
+  });
 });

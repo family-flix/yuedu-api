@@ -239,6 +239,11 @@ export function parse_name_of_chapter(
     },
     {
       key: k("episode"),
+      regexp: /^([0-9]{1,})\./,
+      pick: [1],
+    },
+    {
+      key: k("episode"),
       regexp: /[\u4e00-\u9fa5]{1,}(0[1-9]{1,2})\./,
       pick: [1],
     },

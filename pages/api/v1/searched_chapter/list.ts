@@ -17,10 +17,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   const { authorization } = req.headers;
   const {
+    searched_novel_id,
     name,
     next_marker = "",
     page_size,
   } = req.body as Partial<{
+    searched_novel_id: string;
     name: string;
     next_marker: string;
     page_size: number;
@@ -30,11 +32,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return e(t_res);
   }
   const user = t_res.data;
-  const where: ModelQuery<"searched_chapter"> = {
-    name: {
+  const where: ModelQuery<"searched_chapter"> = {};
+  if (name) {
+    where.name = {
       contains: name,
-    },
-  };
+    };
+  }
+  if (searched_novel_id) {
+    where.searched_novel_id = searched_novel_id;
+  }
   const result = await store.list_with_cursor({
     fetch: (args) => {
       return store.prisma.searched_chapter.findMany({
@@ -52,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           },
         },
         orderBy: {
-          created: "desc",
+          order: "asc",
         },
         ...args,
       });
