@@ -219,7 +219,8 @@ export class ScheduleTask {
     }
     return Result.Ok(null);
   }
-  async match_searched_chapter() {
+  async match_searched_chapter(options: Partial<{ force: boolean }> = {}) {
+    const { force = false } = options;
     const created_chapters: Record<
       string,
       {
@@ -252,7 +253,7 @@ export class ScheduleTask {
         // const chapter_name = name.replace(/,/g, "，").replace(/:/g, "：").replace(/;/g, "；");
         // const parsed = format_chapter_name(name);
         await (async () => {
-          if (searched_chapter.chapter_profile_id) {
+          if (!force && searched_chapter.chapter_profile_id) {
             return;
           }
           console.log(`${j + 1}、`, name);

@@ -2,39 +2,56 @@ import { Result } from "@/types/index";
 
 import { parse_name_of_chapter } from "./parse_name_of_chapter";
 
-export function match_chapter(
+export function match_chapter<T extends { id: string; name: string; order: number }>(
   chapter: { id: string; name: string },
-  chapters: { id: string; name: string; order: number }[]
-) {
+  chapters: T[]
+): Result<T> {
   const { name } = chapter;
-  const chapter_name = name.replace(/,/g, "，").replace(/:/g, "：").replace(/;/g, "；");
+  function log(...args: unknown[]) {
+    if (!name.includes("接亲")) {
+      return;
+    }
+    // console.log(...args);
+  }
+  const chapter_name = name
+    .replace(/,/g, "，")
+    .replace(/:/g, "：")
+    .replace(/;/g, "；")
+    .replace(/\(/, "（")
+    .replace(/\)/, "）");
   const parsed = format_chapter_name(name);
+  const processed_chapters = chapters.map((c) => {
+    return {
+      ...c,
+      name: c.name.replace(/,/g, "，").replace(/:/g, "：").replace(/;/g, "；").replace(/\(/, "（").replace(/\)/, "）"),
+    };
+  });
   const matched = (() => {
-    let a = chapters.find((chapter) => {
+    let a = processed_chapters.find((chapter) => {
       return chapter.name === name;
     });
-    //     console.log("1", a);
+    log("1", a);
     if (a) {
       return a;
     }
-    a = chapters.find((chapter) => {
+    a = processed_chapters.find((chapter) => {
       return chapter.name === chapter_name;
     });
-    //     console.log("2", a);
+    log("2", a);
     if (a) {
       return a;
     }
-    a = chapters.find((chapter) => {
+    a = processed_chapters.find((chapter) => {
       return chapter.name.includes(parsed.name);
     });
-    //     console.log("3", a);
+    log("3", a);
     if (a) {
       return a;
     }
-    a = chapters.find((chapter) => {
+    a = processed_chapters.find((chapter) => {
       return chapter.name.includes(chapter_name);
     });
-    //     console.log("4", a);
+    log("4", a);
     if (a) {
       return a;
     }
@@ -49,7 +66,7 @@ export function match_chapter(
     return null;
   })();
   if (!matched) {
-    console.log("没有匹配到章节详情");
+    log("没有匹配到章节详情");
     return Result.Err("没有匹配到章节详情", 2001, {
       chapter_profile_name: parsed.name,
     });

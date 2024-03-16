@@ -26,4 +26,18 @@ describe("特殊的集数", () => {
       order: 310,
     });
   });
+
+  test("第二百六十七章 接亲(下)", () => {
+    const name = "第二百六十七章 接亲(下)";
+    const r = match_chapter({ id: "310", name }, [
+      {
+        id: "310",
+        name: "第二百六十六章 接亲（上）",
+        order: 310,
+      },
+    ]);
+    expect(r.data).toStrictEqual({
+      chapter_profile_name: "接亲（下）",
+    });
+  });
 });

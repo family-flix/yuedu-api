@@ -55,4 +55,12 @@ describe("特殊的集数", () => {
       episode_name: "满载而归（求首订）",
     });
   });
+  test("第二百六十七章 接亲(下)", () => {
+    const name = "第二百六十七章 接亲(下)";
+    const result = parse_name_of_chapter(name);
+    expect(result).toStrictEqual({
+      episode: "E267",
+      episode_name: "接亲（下）",
+    });
+  });
 });

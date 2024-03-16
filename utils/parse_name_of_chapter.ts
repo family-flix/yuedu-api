@@ -51,6 +51,11 @@ export function parse_name_of_chapter(
   log("filename is", filename);
   let original_filename = filename
     .trim()
+    .replace(/,/g, "，")
+    .replace(/:/g, "：")
+    .replace(/;/g, "；")
+    .replace(/\(/, "（")
+    .replace(/\)/, "）")
     .replace(/^\[[a-zA-Z0-9&-]{1,}\]/, ".")
     .replace(/^\[[^\]]{1,}\](?=\[)/, "")
     .replace(/^【[^】0-9]{1,}】/, "")
