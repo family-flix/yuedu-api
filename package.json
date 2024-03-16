@@ -9,7 +9,8 @@
     "build": "next build",
     "schedule": "vite-node scripts/schedule.ts",
     "db": "npx prisma studio",
-    "check": "tsc --noEmit"
+    "pre-push": "yarn lint",
+    "lint": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",

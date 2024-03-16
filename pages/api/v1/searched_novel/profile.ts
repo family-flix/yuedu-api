@@ -16,8 +16,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const e = response_error_factory(res);
 
   const { authorization } = req.headers;
-  const { novel_id } = req.body as Partial<{
-    novel_id: string;
+  const { searched_novel_id } = req.body as Partial<{
+    searched_novel_id: string;
   }>;
   const t_res = await User.New(authorization, store);
   if (t_res.error) {
@@ -25,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
   const user = t_res.data;
   const where: ModelQuery<"searched_novel"> = {
-    id: novel_id,
+    id: searched_novel_id,
   };
   const page_size = 100;
   const args = await store.build_extra_args({ page_size });
