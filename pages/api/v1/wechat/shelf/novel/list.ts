@@ -18,7 +18,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     page: number;
     page_size: number;
   }>;
-  console.log(authorization);
   const t_res = await Member.New(authorization, store);
   if (t_res.error) {
     return e(t_res);

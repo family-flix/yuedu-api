@@ -73,7 +73,7 @@ LEFT JOIN (
     ph.novel_id AS novel_id,
     ph.novel_chapter_id AS novel_chapter_profile_id
   FROM PlayHistory ph
-  WHERE ph.member_id = '${member.id}'
+  WHERE ph.member_id = ${member.id}
   ORDER BY ph.updated DESC
 ) history ON history.novel_id = n.id
 LEFT JOIN (
@@ -110,7 +110,7 @@ LEFT JOIN (
   FROM NovelProfile np
   JOIN NovelAuthor na ON np.author_id = na.id
 ) novel_profile ON  n.novel_profile_id = novel_profile.id
-WHERE n.user_id = '${member.user.id}'
+WHERE n.user_id = ${member.user.id}
 LIMIT ${page_size} OFFSET ${(page - 1) * page_size}
   `;
     const data = {
