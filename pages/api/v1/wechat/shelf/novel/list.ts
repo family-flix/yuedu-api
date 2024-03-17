@@ -7,7 +7,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { store } from "@/store/index";
 import { Member } from "@/domains/user/member";
 import { ModelQuery } from "@/domains/store/types";
-import { BaseApiResp } from "@/types/index";
+import { BaseApiResp, Result } from "@/types/index";
 import { response_error_factory } from "@/utils/server";
 import { NovelCore } from "@/domains/novel";
 
@@ -23,7 +23,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return e(t_res);
   }
   const member = t_res.data;
-  const data = await NovelCore.fetch_novels_of_member({ page, page_size, member, store });
+  const r = await NovelCore.fetch_novels_of_member({ page, page_size, member, store });
+  if (r.error) {
+    return e(Result.Err(r.error.message));
+  }
+  const data = r.data;
   res.status(200).json({
     code: 0,
     msg: "",

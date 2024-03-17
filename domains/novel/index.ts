@@ -50,6 +50,7 @@ export class NovelCore {
       novel_profile_name: string;
       novel_profile_cover_path: string;
       latest_chapter_created: string;
+      latest_chapter_name: string;
       author_id: string;
       author_name: string;
       cur_chapter_name: string | null;
@@ -117,12 +118,26 @@ LIMIT ${page_size} OFFSET ${(page - 1) * page_size}
       page,
       page_size,
       list: result.map((novel) => {
-        const { id, novel_profile_cover_path, novel_profile_name, author_id, author_name } = novel;
+        const {
+          id,
+          novel_profile_cover_path,
+          novel_profile_name,
+          latest_chapter_created,
+          latest_chapter_name,
+          cur_chapter_name,
+          updated,
+          author_id,
+          author_name,
+        } = novel;
         return {
           id,
           name: novel_profile_name,
           cover_path: novel_profile_cover_path,
           overview: null,
+          cur_chapter_name,
+          latest_chapter_created,
+          latest_chapter_name,
+          updated,
           author: {
             id: author_id,
             name: author_name,
