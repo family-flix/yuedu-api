@@ -51,6 +51,7 @@ export class NovelCore {
       novel_profile_cover_path: string;
       latest_chapter_created: string;
       latest_chapter_name: string;
+      max_date: string;
       author_id: string;
       author_name: string;
       cur_chapter_name: string | null;
@@ -66,6 +67,10 @@ SELECT
   ncp.name AS cur_chapter_name,
   latest_chapter.name AS latest_chapter_name,
   latest_chapter.created AS latest_chapter_created,
+  CASE 
+      WHEN history.updated > n.created THEN history.updated
+      ELSE n.created
+    END AS max_date,
   history.updated AS updated
 FROM Novel n
 LEFT JOIN (
@@ -75,7 +80,6 @@ LEFT JOIN (
     ph.novel_chapter_id AS novel_chapter_profile_id
   FROM PlayHistory ph
   WHERE ph.member_id = ${member.id}
-  ORDER BY ph.updated DESC
 ) history ON history.novel_id = n.id
 LEFT JOIN (
   SELECT
@@ -112,6 +116,7 @@ LEFT JOIN (
   JOIN NovelAuthor na ON np.author_id = na.id
 ) novel_profile ON  n.novel_profile_id = novel_profile.id
 WHERE n.user_id = ${member.user.id}
+ORDER BY max_date DESC
 LIMIT ${page_size} OFFSET ${(page - 1) * page_size}
   `;
     const data = {
@@ -135,6 +140,7 @@ LIMIT ${page_size} OFFSET ${(page - 1) * page_size}
           latest_chapter_name,
           cur_chapter_name,
           updated,
+          max_date,
           author_id,
           author_name,
         } = novel;
@@ -147,6 +153,7 @@ LIMIT ${page_size} OFFSET ${(page - 1) * page_size}
           latest_chapter_created,
           latest_chapter_name,
           updated,
+          max_date: String(max_date),
           author: {
             id: author_id,
             name: author_name,
