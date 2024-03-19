@@ -107,7 +107,7 @@ model searched_chapter {
         name      String
         url       String
         order     Int
-        content   String
+        content   String?
         error     String?
 
         searched_novel_id  String

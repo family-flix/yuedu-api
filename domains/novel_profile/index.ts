@@ -2,17 +2,19 @@
  * @file 获取小说详情信息
  */
 
-import { DataStore } from "@/domains/store/types";
+import { NovelProfile } from "@/domains/novel/types";
+import { DataStore, NovelProfileRecord } from "@/domains/store/types";
+import { Result } from "@/types/index";
 
 import { SearchedNovelChapterProfile, SearchedNovelSectionProfile } from "./types";
 import { QidianClient } from "./qidian";
-import { Result } from "@/types";
 
 interface NovelProfileClientProps {
   store: DataStore;
 }
 export class NovelProfileClient {
   store: DataStore;
+  client = new QidianClient();
 
   constructor(props: NovelProfileClientProps) {
     const { store } = props;
@@ -39,7 +41,6 @@ export class NovelProfileClient {
   }
   async get_novel_profile(values: { unique_id: string }) {
     const { unique_id } = values;
-    const client = new QidianClient();
     const novel_profile = await this.store.prisma.novel_profile.findFirst({
       where: {
         id: unique_id,
@@ -53,24 +54,17 @@ export class NovelProfileClient {
     // console.log("novel_profile", novel_profile);
     if (novel_profile) {
       if (novel_profile.novel_chapter_profiles.length === 0) {
-        const r2 = await client.fetch_chapters(unique_id);
-        if (r2.error) {
-          return Result.Err(r2.error.message);
-        }
-        for (let i = 0; i < r2.data.length; i += 1) {
-          const chapter = r2.data[i];
-          await this.get_chapter_profile(chapter, novel_profile);
-        }
+        this.fetch_chapters(novel_profile);
       }
       return Result.Ok(novel_profile);
     }
-    const r = await client.fetch_profile(unique_id);
+    const r = await this.client.fetch_profile(unique_id);
     if (r.error) {
       return Result.Err(r.error.message);
     }
     const { name, overview, cover_path, in_production, chapter_count, author } = r.data;
     const author_record = await this.get_author(author.id, author.name);
-    console.log("before novel_profile.create", author_record);
+    // console.log("before novel_profile.create", author_record);
     const created = await this.store.prisma.novel_profile.create({
       data: {
         id: unique_id,
@@ -82,14 +76,7 @@ export class NovelProfileClient {
         author_id: author_record.id,
       },
     });
-    const r2 = await client.fetch_chapters(unique_id);
-    if (r2.error) {
-      return Result.Err(r2.error.message);
-    }
-    for (let i = 0; i < r2.data.length; i += 1) {
-      const chapter = r2.data[i];
-      await this.get_chapter_profile(chapter, created);
-    }
+    this.fetch_chapters(created);
     return Result.Ok(created);
   }
   /** 获取小说 篇 详情记录 */
@@ -113,7 +100,20 @@ export class NovelProfileClient {
     });
     return created;
   }
-  async get_chapter_profile(chapter: SearchedNovelChapterProfile, novel_profile: { id: string }) {
+  async fetch_chapters(novel_profile: NovelProfileRecord) {
+    const { id } = novel_profile;
+    const r2 = await this.client.fetch_chapters(id);
+    if (r2.error) {
+      return Result.Err(r2.error.message);
+    }
+    for (let i = 0; i < r2.data.length; i += 1) {
+      const chapter = r2.data[i];
+      await this.get_chapter_profile_record(chapter, novel_profile);
+    }
+    return Result.Ok(null);
+  }
+  /** 获取章节详情 */
+  async get_chapter_profile_record(chapter: SearchedNovelChapterProfile, novel_profile: { id: string }) {
     const { unique_id, name, order, text_count, updated_at, section } = chapter;
     const chapter_profile = await this.store.prisma.novel_chapter_profile.findFirst({
       where: {

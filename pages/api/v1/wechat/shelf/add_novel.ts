@@ -4,13 +4,14 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { store } from "@/store";
+import { app, store } from "@/store";
 import { Member } from "@/domains/user/member";
 import { SearchedPartialNovelProfile } from "@/domains/novel_profile/types";
 import { NovelProfileClient } from "@/domains/novel_profile";
 import { BaseApiResp, Result } from "@/types";
 import { response_error_factory } from "@/utils/server";
 import { r_id } from "@/utils/index";
+import { ScheduleTask } from "@/domains/schedule";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<BaseApiResp<unknown>>) {
   const e = response_error_factory(res);
@@ -36,7 +37,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const profile_client = new NovelProfileClient({
     store,
   });
-  console.log("before get_novel_profile", unique_id);
+  const schedule = new ScheduleTask({ app, store });
+  // console.log("before get_novel_profile", unique_id);
   const r1 = await profile_client.get_novel_profile({ unique_id });
   if (r1.error) {
     return e(Result.Err(r1.error.message));
@@ -49,8 +51,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     },
   });
   if (existing) {
-    return e(Result.Err("添加成功"));
+    return e(Result.Err("已添加至书架"));
   }
+  (async () => {
+    const r = await schedule.search_novel_by_novel_sources({ novel: novel_profile, user: member.user });
+    if (r.error) {
+      return;
+    }
+    for (let i = 0; i < r.data.length; i += 1) {
+      console.log(r.data[i].name);
+      await schedule.match_chapters_of_searched_novel(r.data[i]);
+    }
+  })();
   await store.prisma.novel.create({
     data: {
       id: r_id(),

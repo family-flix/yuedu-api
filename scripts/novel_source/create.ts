@@ -38,6 +38,11 @@ async function main() {
       name: "大熊猫文学网",
       url: "https://www.dxmwx.org/",
     },
+    {
+      unique_id: "biqu520",
+      name: "笔趣520",
+      url: "http://m.biqu520.net",
+    },
   ];
   const users = await store.prisma.user.findMany({});
   for (let i = 0; i < users.length; i += 1) {

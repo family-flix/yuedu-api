@@ -80,7 +80,7 @@ LIMIT ${page_size} OFFSET ${next_marker}
   // ORDER BY novel.chapter_created DESC
 
   const r2 = await store.prisma.$queryRaw`
-SELECT DISTINCT novel.*, m1.updated AS updated, nc.name AS cur_chapter_name
+SELECT novel.*, m1.updated AS updated, nc.name AS cur_chapter_name
 FROM PlayHistory m1
 JOIN (
   SELECT

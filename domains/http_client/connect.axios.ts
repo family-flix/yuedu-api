@@ -1,16 +1,27 @@
 import axios from "axios";
+import iconv from "iconv-lite";
 
 import { HttpClientCore } from "./index";
 
 export function connect(store: HttpClientCore) {
-  store.fetch = (options) => {
-    const { url, method, data, headers } = options;
+  store.fetch = async (options) => {
+    const { url, method, data, charset, headers } = options;
     if (method === "GET") {
-      return axios.get(url, {
+      const config = {
         headers: {
           ...headers,
         },
-      });
+      };
+      if (charset === "gbk") {
+        // @ts-ignore
+        config.responseType = "arraybuffer";
+      }
+      const r = await axios.get(url, config);
+      if (charset === "gbk") {
+        const d = iconv.decode(r.data, "gbk");
+        r.data = d;
+      }
+      return r;
     }
     if (method === "POST") {
       return axios.post(url, data, {

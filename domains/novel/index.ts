@@ -117,6 +117,15 @@ LIMIT ${page_size} OFFSET ${(page - 1) * page_size}
     const data = {
       page,
       page_size,
+      no_more: (() => {
+        if (result.length < page_size) {
+          return true;
+        }
+        if (result.length === 0) {
+          return true;
+        }
+        return false;
+      })(),
       list: result.map((novel) => {
         const {
           id,

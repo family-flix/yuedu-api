@@ -174,7 +174,7 @@ export class Bg3Source extends NovelSourceClient {
     //     const [, id, page_num] = matched;
     //     const url2 = `https://cn.bg3.co/novel/pagea/${id}_${page_num}.html`;
     //     console.log("[]fetch_content - before goto url2", url);
-    console.log("fetch_content - before goto", url);
+    console.log([this.unique_id].join("/"), "fetch_content - before goto", url);
     const proxy = "https://proxy.f1x.fun/api/proxy/?u=";
     const r = await this.client.get<string>([proxy, url].join(""));
     if (r.error) {

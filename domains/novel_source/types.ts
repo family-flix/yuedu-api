@@ -5,12 +5,12 @@ import { FileType, MediaResolutionTypes } from "@/constants";
 import { DataStore } from "@/domains/store/types";
 import { Result } from "@/types";
 
-type SearchedNovel = {
+export type SearchedNovel = {
   id: string;
   name: string;
   url: string;
 };
-type SearchedNovelChapter = {
+export type SearchedNovelChapter = {
   id: string;
   name: string;
   url: string;
@@ -24,9 +24,9 @@ export abstract class NovelSourceClient {
   /** 搜索小说 */
   abstract search(keyword: string): Promise<Result<SearchedNovel>>;
   /** 获取章节列表 */
-  abstract fetch_chapters(novel: SearchedNovel): Promise<Result<{ chapters: SearchedNovelChapter[] }>>;
+  abstract fetch_chapters(novel: { id: string }): Promise<Result<{ chapters: SearchedNovelChapter[] }>>;
   /** 获取章节正文 */
-  abstract fetch_content(chapter: SearchedNovelChapter): Promise<Result<string[]>>;
+  abstract fetch_content(chapter: { url: string }): Promise<Result<string[]>>;
 }
 
 /**

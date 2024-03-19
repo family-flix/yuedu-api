@@ -27,8 +27,8 @@ type SourceProps = {
   unique_id: string;
   browser?: BrowserHelper;
 };
-export class MingZWSource extends NovelSourceClient {
-  static hostname = "https://www.mingzw.net";
+export class Biqu520Source extends NovelSourceClient {
+  static hostname = "http://m.biqu520.net";
   // static async Start(props: { id: string; unique_id: string; browser: BrowserHelper }) {
   //   const { id, unique_id, browser } = props;
   //   const r = await BrowserHelper.Launch();
@@ -52,6 +52,20 @@ export class MingZWSource extends NovelSourceClient {
     this.unique_id = unique_id;
     this.browser = browser;
     this.client = new HttpClientCore();
+    this.client.appendHeaders({
+      Accept:
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+      "Accept-Encoding": "gzip, deflate",
+      "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+      Connection: "keep-alive",
+      Cookie:
+        "rids=201459%2C199916; Hm_lvt_29308bff1e04139f17c5c9bf3dc6ffd7=1710751253; pv=4; cac=94; Hm_lpvt_29308bff1e04139f17c5c9bf3dc6ffd7=1710751262",
+      Host: "m.biqu520.net",
+      Referer: "http://m.biqu520.net/",
+      "Upgrade-Insecure-Requests": "1",
+      "User-Agent":
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
+    });
     connect(this.client);
   }
 
@@ -61,13 +75,19 @@ export class MingZWSource extends NovelSourceClient {
     //   return Result.Err(r.error.message);
     // }
     // const page = r.data;
-    const r = await this.client.get<string>(`https://www.mingzw.net/mzwlist/${encodeURIComponent(keyword)}.html`);
+    const r = await this.client.get<string>(
+      `http://m.biqu520.net/modules/article/waps.php?keyword=${encodeURIComponent(keyword)}`,
+      {},
+      {
+        charset: "gbk",
+      }
+    );
     if (r.error) {
       return Result.Err(r.error.message);
     }
     const $ = load(r.data);
     const books_html: string[] = [];
-    $(".figure-horizontal").each((i, el) => {
+    $(".line").each((i, el) => {
       const text = $(el).html();
       if (text) {
         books_html.push(text);
@@ -75,9 +95,9 @@ export class MingZWSource extends NovelSourceClient {
     });
     const books = books_html
       .map((item) => {
-        const url_r = /href="(\/mzwbook\/[^"]{1,})"/;
+        const url_r = /href="(\/info-[^"]{1,})\/"/;
         const url = item.match(url_r);
-        const name_r = /title="([^"]{1,})">/;
+        const name_r = /href="\/info-[^"]{1,}\/"[^>]{1,}>([^<]{1,})<\/a/;
         const name = item.match(name_r);
         return {
           id: (() => {
@@ -102,6 +122,7 @@ export class MingZWSource extends NovelSourceClient {
     }
     const matched = this.find_matched_book(books, { name: keyword });
     if (!matched) {
+      console.log(books);
       return Result.Err(`搜索到结果，但没有完美匹配 '${keyword}' 的结果`);
     }
     return Result.Ok(matched);
@@ -115,23 +136,28 @@ export class MingZWSource extends NovelSourceClient {
     }
     return null;
   }
-  async fetch_chapters(novel: { id: string }) {
-    const { id } = novel;
-    const r = await this.client.get<string>(`https://www.mingzw.net/mzwchapter/${id}.html`);
+  async fetch_chapters_by_page(id: string, page: number) {
+    const r = await this.client.get<string>(
+      `http://m.biqu520.net/wapbook-${id}_${page}_1/`,
+      {},
+      {
+        charset: "gbk",
+      }
+    );
     if (r.error) {
       return Result.Err(r.error.message);
     }
     const $ = load(r.data);
     const chapters_html: string[] = [];
-    $(".content ul li").each((i, el) => {
+    $(".chapter li").each((i, el) => {
       const text = $(el).html();
       if (text) {
-        chapters_html.push(text);
+        chapters_html.push(text.replace(/<span><\/span>/, ""));
       }
     });
     const chapters = chapters_html
       .map((item) => {
-        const url_r = /href="(\/mzwread\/[^"]{1,})"/;
+        const url_r = /href="(\/wapbook-[^"]{1,})"/;
         const url = item.match(url_r);
         const name_r = /">([^<]{1,})<\/a>/;
         const name = item.match(name_r);
@@ -140,19 +166,50 @@ export class MingZWSource extends NovelSourceClient {
             if (!url) {
               return null;
             }
-            const r = url[1].match(/[0-9]{1,}_([0-9]{1,})/);
+            const r = url[1].match(/[0-9]{1,}-([0-9]{1,})/);
             if (!r) {
               return null;
             }
             return r[1];
           })(),
           name: name ? name[1] : null,
-          url: url ? [MingZWSource.hostname, url[1]].join("") : null,
+          url: url ? [Biqu520Source.hostname, url[1]].join("") : null,
         };
       })
       .filter((chapter) => {
         return chapter.id && chapter.name && chapter.url;
       }) as SearchedNovelChapter[];
+    return Result.Ok({
+      list: chapters,
+      has_more: (() => {
+        const e = $(".page").html();
+        if (!e) {
+          return false;
+        }
+        if (e.includes("下一页")) {
+          return true;
+        }
+        return false;
+      })(),
+    });
+  }
+  async fetch_chapters(novel: { id: string }) {
+    const { id } = novel;
+    const chapters: SearchedNovelChapter[] = [];
+    let page = 1;
+    let has_more = true;
+    do {
+      await (async () => {
+        const r1 = await this.fetch_chapters_by_page(id, page);
+        page += 1;
+        if (r1.error) {
+          has_more = false;
+          return;
+        }
+        has_more = r1.data.has_more;
+        chapters.push(...r1.data.list);
+      })();
+    } while (has_more);
     return Result.Ok({
       chapters,
     });
@@ -160,25 +217,44 @@ export class MingZWSource extends NovelSourceClient {
   async fetch_content(chapter: { url: string }) {
     const { url } = chapter;
     console.log([this.unique_id].join("/"), "fetch_content - before goto", url);
-    const r = await this.client.get<string>(url);
+    const r = await this.client.get<string>(url, {}, { charset: "gbk" });
     if (r.error) {
       return Result.Err(r.error.message);
     }
     // const page = r.data;
     const $ = load(r.data);
-    const $content = await $(".contents");
+    const $content = await $("div.text");
     if (!$content) {
-      return Result.Err("没有找到 .content");
+      return Result.Err("没有找到 content");
     }
-    const outerHTML = $content.html();
-    if (!outerHTML) {
-      return Result.Err("没有 html");
+    const paragraphs: string[] = [];
+    await $("div.text p").each((i, el) => {
+      const html = $(el).text();
+      if (html) {
+        paragraphs.push(html);
+      }
+    });
+    if (!paragraphs.length) {
+      return Result.Err("没有找到 content");
     }
-    const r2 = outerHTML.replace(/<p>/g, "").replace(/<\/p>/g, "\n");
-    const contents = r2
-      .split("\n")
+    const contents = paragraphs
       .map((text) => text.trim())
+      .filter((text) => {
+        if (text.includes("【点击下载")) {
+          return false;
+        }
+        if (text.includes("【在阅读模式下")) {
+          return false;
+        }
+        if (text.includes("【<a")) {
+          return false;
+        }
+        return true;
+      })
       .filter(Boolean) as string[];
+    if (contents.length < 20) {
+      return Result.Err("章节内容不全");
+    }
     return Result.Ok(contents);
   }
   async finish() {

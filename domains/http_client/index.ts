@@ -33,7 +33,7 @@ export class HttpClientCore extends BaseDomain<TheTypesOfEvents> {
   async get<T>(
     endpoint: string,
     query?: Record<string, string | number | undefined | null>,
-    extra: Partial<{ headers: Record<string, string>; token: unknown }> = {}
+    extra: Partial<{ headers: Record<string, string>; charset: string; token: unknown }> = {}
   ): Promise<Result<T>> {
     try {
       const url = `${this.hostname}${endpoint}${query ? "?" + query_stringify(query) : ""}`;
@@ -41,6 +41,7 @@ export class HttpClientCore extends BaseDomain<TheTypesOfEvents> {
         url,
         method: "GET",
         // cancelToken: extra.token,
+        charset: extra.charset,
         headers: {
           ...this.headers,
           ...(extra.headers || {}),
@@ -91,6 +92,7 @@ export class HttpClientCore extends BaseDomain<TheTypesOfEvents> {
   async fetch<T>(options: {
     url: string;
     method: "GET" | "POST" | "PUT" | "DELETE";
+    charset?: string;
     data?: JSONObject | FormData;
     headers?: Record<string, string>;
   }) {

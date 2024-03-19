@@ -2,16 +2,25 @@ import dayjs from "dayjs";
 
 import { Application } from "@/domains/application";
 import { walk_model_with_cursor } from "@/domains/store/utils";
-import { DataStore } from "@/domains/store/types";
+import {
+  DataStore,
+  NovelChapterProfileRecord,
+  NovelProfileRecord,
+  NovelSourceRecord,
+  SearchedChapterRecord,
+  SearchedNovelRecord,
+} from "@/domains/store/types";
 import { QidianClient } from "@/domains/novel_profile/qidian";
 import { NovelProfileClient } from "@/domains/novel_profile";
 import { Administrator } from "@/domains/user/administrator";
 import { NovelSourceClientMap } from "@/domains/novel_source";
-import { NovelSourceClient } from "@/domains/novel_source/types";
+import { NovelSourceClient, SearchedNovelChapter } from "@/domains/novel_source/types";
+import { User } from "@/domains/user";
 import { r_id } from "@/utils/index";
 import { get_episode_num, parse_name_of_chapter } from "@/utils/parse_name_of_chapter";
 import { match_chapter } from "@/utils/match_chapter";
 import { Result } from "@/types/index";
+import { SearchedNovelChapterProfile } from "../novel_profile/types";
 
 export class ScheduleTask {
   profile_client: QidianClient;
@@ -102,33 +111,138 @@ export class ScheduleTask {
       })();
     }
   }
-  async search_novels() {
+  async search_novels(options: Partial<{ force: boolean }> = {}) {
     await this.walk_user(async (user) => {
       const novel_sources = await this.store.prisma.novel_source.findMany({
         where: {
           user_id: user.id,
         },
       });
-      const novels = await this.store.prisma.novel_profile.findMany({});
-      for (let i = 0; i < novel_sources.length; i += 1) {
-        await (async () => {
-          const novel_source = novel_sources[i];
-          const Client = NovelSourceClientMap[novel_source.unique_id];
-          if (!Client) {
-            return;
-          }
-          const client = new Client({ unique_id: novel_source.unique_id });
-          for (let j = 0; j < novels.length; j += 1) {
-            await this.search_novel_by_novel_source(novels[j], { id: novel_source.id, client });
-          }
-        })();
-      }
+      await walk_model_with_cursor({
+        fn: (args) => {
+          return this.store.prisma.novel_profile.findMany({
+            ...args,
+          });
+        },
+        handler: async (novel) => {
+          await this.search_novel_by_novel_sources({ novel, user, novel_sources }, { include_content: true });
+        },
+      });
+      // await this.match_searched_chapter();
+      await this.walk_with_source({
+        default_sources: novel_sources,
+        user,
+        handler: async ({ id, client }) => {
+          await walk_model_with_cursor({
+            fn: (extra) => {
+              return this.store.prisma.searched_chapter.findMany({
+                where: {
+                  searched_novel: {
+                    source_id: id,
+                  },
+                },
+                ...extra,
+              });
+            },
+            handler: async (chapter) => {
+              if (!options.force && chapter.content) {
+                return;
+              }
+              await this.fetch_chapter_content(chapter, client);
+            },
+          });
+        },
+      });
     });
+    return Result.Ok(null);
   }
-  /** 使用书源搜索指定书记 */
+  async search_novel_by_novel_sources(
+    values: {
+      novel: NovelProfileRecord;
+      user: User;
+      novel_sources?: NovelSourceRecord[];
+    },
+    options: Partial<{ include_content: boolean }> = {}
+  ) {
+    const { novel, novel_sources, user } = values;
+    const sources = await (async () => {
+      if (novel_sources) {
+        return novel_sources;
+      }
+      return this.store.prisma.novel_source.findMany({
+        where: {
+          user_id: user.id,
+        },
+      });
+    })();
+    for (let i = 0; i < sources.length; i += 1) {
+      await (async () => {
+        const novel_source = sources[i];
+        const Client = NovelSourceClientMap[novel_source.unique_id];
+        if (!Client) {
+          return;
+        }
+        const client = new Client({ unique_id: novel_source.unique_id });
+        console.log("search_novel_by_novel_source", novel_source.name);
+        await this.search_novel_by_novel_source(novel, { id: novel_source.id, client }, options);
+      })();
+    }
+    const searched_novels = await this.store.prisma.searched_novel.findMany({
+      where: {
+        profile_id: novel.id,
+      },
+      include: {
+        profile: {
+          include: {
+            novel_chapter_profiles: true,
+          },
+        },
+        chapters: true,
+      },
+    });
+    return Result.Ok(searched_novels);
+  }
+  find_source(unique_id: string) {
+    const Client = NovelSourceClientMap[unique_id];
+    if (!Client) {
+      return null;
+    }
+    return new Client({ unique_id });
+  }
+  async walk_with_source(options: {
+    handler: (values: { id: string; name: string; client: NovelSourceClient }) => void;
+    user: User;
+    default_sources?: NovelSourceRecord[];
+  }) {
+    const { handler, user, default_sources } = options;
+    const sources = await (async () => {
+      if (default_sources) {
+        return default_sources;
+      }
+      return this.store.prisma.novel_source.findMany({
+        where: {
+          user_id: user.id,
+        },
+      });
+    })();
+    for (let i = 0; i < sources.length; i += 1) {
+      await (async () => {
+        const novel_source = sources[i];
+        const Client = NovelSourceClientMap[novel_source.unique_id];
+        if (!Client) {
+          return;
+        }
+        const client = new Client({ unique_id: novel_source.unique_id });
+        await handler({ id: novel_source.id, name: novel_source.name, client });
+      })();
+    }
+    return Result.Ok(null);
+  }
+  /** 使用书源搜索指定书籍 */
   async search_novel_by_novel_source(
     novel: { id: string; name: string },
-    source: { id: string; client: NovelSourceClient }
+    source: { id: string; client: NovelSourceClient },
+    options: Partial<{ include_content: boolean }> = {}
   ) {
     const r2 = await source.client.search(novel.name);
     if (r2.error) {
@@ -194,14 +308,6 @@ export class ScheduleTask {
           // 已经存在就忽略，另外有地方主动刷新章节
           return;
         }
-        const r4 = await source.client.fetch_content(chapter);
-        if (r4.error) {
-          console.log(r4.error.message);
-          return;
-        }
-        const content = r4.data;
-        const contents = content.join("\n");
-        console.log(chapter.name, "成功获取到章节内容，内容总字数", contents.length);
         const { episode } = parse_name_of_chapter(chapter.name);
         const num = get_episode_num(episode);
         await this.store.prisma.searched_chapter.create({
@@ -211,16 +317,37 @@ export class ScheduleTask {
             name: chapter.name,
             url: chapter.url,
             order: num || i,
-            content: contents,
             searched_novel_id: searched_novel_record.id,
           },
         });
+        if (options.include_content) {
+          await this.fetch_chapter_content(chapter, source.client);
+        }
       })();
     }
-    return Result.Ok(null);
+    return Result.Ok(searched_novel_record);
+  }
+  async fetch_chapter_content(chapter: { id: string; url: string }, source: NovelSourceClient) {
+    const { id } = chapter;
+    const r4 = await source.fetch_content(chapter);
+    if (r4.error) {
+      console.log(r4.error.message);
+      return Result.Err(r4.error.message);
+    }
+    const content = r4.data;
+    const contents = content.join("\n");
+    console.log("成功获取到章节内容，内容总字数", contents.length);
+    await this.store.prisma.searched_chapter.update({
+      where: {
+        id,
+      },
+      data: {
+        content: contents,
+      },
+    });
+    return Result.Ok(contents);
   }
   async match_searched_chapter(options: Partial<{ force: boolean }> = {}) {
-    const { force = false } = options;
     const created_chapters: Record<
       string,
       {
@@ -228,65 +355,31 @@ export class ScheduleTask {
         chapter_name: string;
       }[]
     > = {};
-    const searched_novels = await this.store.prisma.searched_novel.findMany({
-      include: {
-        profile: {
+    await walk_model_with_cursor({
+      fn: (extra) => {
+        return this.store.prisma.searched_novel.findMany({
           include: {
-            novel_chapter_profiles: true,
+            profile: {
+              include: {
+                novel_chapter_profiles: true,
+              },
+            },
+            chapters: {
+              orderBy: {
+                order: "asc",
+              },
+            },
           },
-        },
-        chapters: {
-          orderBy: {
-            order: "asc",
-          },
-        },
+          ...extra,
+        });
+      },
+      batch_handler: async (list, index) => {
+        for (let i = 0; i < list.length; i += 1) {
+          const r = await this.match_chapters_of_searched_novel(list[i], options);
+          Object.assign(created_chapters, r);
+        }
       },
     });
-    for (let i = 0; i < searched_novels.length; i += 1) {
-      const searched_novel = searched_novels[i];
-      const { profile, chapters: searched_chapters } = searched_novel;
-      const { novel_chapter_profiles: chapters } = profile;
-      console.log(`处理搜索到的小说 '${searched_novel.name}' 章节`);
-      for (let j = 0; j < searched_chapters.length; j += 1) {
-        const searched_chapter = searched_chapters[j];
-        const { id, name } = searched_chapter;
-        // const chapter_name = name.replace(/,/g, "，").replace(/:/g, "：").replace(/;/g, "；");
-        // const parsed = format_chapter_name(name);
-        await (async () => {
-          if (!force && searched_chapter.chapter_profile_id) {
-            return;
-          }
-          console.log(`${j + 1}、`, name);
-          const r = match_chapter(searched_chapter, chapters);
-          if (r.error) {
-            await this.store.prisma.searched_chapter.update({
-              where: { id },
-              data: {
-                error: JSON.stringify({
-                  text: "没有匹配到章节详情",
-                }),
-              },
-            });
-            return;
-          }
-          const matched = r.data;
-          // const chapter = get_novel_chapter(matched);
-          console.log("成功匹配到章节详情", matched.name);
-          await this.store.prisma.searched_chapter.update({
-            where: { id },
-            data: {
-              chapter_profile_id: matched.id,
-              error: null,
-            },
-          });
-          created_chapters[profile.name] = created_chapters[profile.name] || [];
-          created_chapters[profile.name].push({
-            novel_name: profile.name,
-            chapter_name: matched.name,
-          });
-        })();
-      }
-    }
     const novels_has_chapters = Object.keys(created_chapters);
     if (novels_has_chapters.length === 0) {
       return Result.Ok(null);
@@ -299,5 +392,65 @@ export class ScheduleTask {
       tips.push(tip);
     }
     return Result.Ok(tips.join("\n\n"));
+  }
+  async match_chapters_of_searched_novel(
+    searched_novel: SearchedNovelRecord & {
+      profile: NovelProfileRecord & {
+        novel_chapter_profiles: NovelChapterProfileRecord[];
+      };
+      chapters: SearchedChapterRecord[];
+    },
+    options: Partial<{ force: boolean }> = {}
+  ) {
+    const { profile, chapters: searched_chapters } = searched_novel;
+    const { novel_chapter_profiles: chapters } = profile;
+    const created_chapters: Record<
+      string,
+      {
+        novel_name: string;
+        chapter_name: string;
+      }[]
+    > = {};
+    console.log(`处理搜索到的小说 '${searched_novel.name}' 章节`);
+    for (let j = 0; j < searched_chapters.length; j += 1) {
+      const searched_chapter = searched_chapters[j];
+      const { id, name } = searched_chapter;
+      // const chapter_name = name.replace(/,/g, "，").replace(/:/g, "：").replace(/;/g, "；");
+      // const parsed = format_chapter_name(name);
+      await (async () => {
+        if (!options.force && searched_chapter.chapter_profile_id) {
+          return;
+        }
+        console.log(`${j + 1}、`, name);
+        const r = match_chapter(searched_chapter, chapters);
+        if (r.error) {
+          await this.store.prisma.searched_chapter.update({
+            where: { id },
+            data: {
+              error: JSON.stringify({
+                text: "没有匹配到章节详情",
+              }),
+            },
+          });
+          return;
+        }
+        const matched = r.data;
+        // const chapter = get_novel_chapter(matched);
+        console.log("成功匹配到章节详情", matched.name);
+        await this.store.prisma.searched_chapter.update({
+          where: { id },
+          data: {
+            chapter_profile_id: matched.id,
+            error: null,
+          },
+        });
+        created_chapters[profile.name] = created_chapters[profile.name] || [];
+        created_chapters[profile.name].push({
+          novel_name: profile.name,
+          chapter_name: matched.name,
+        });
+      })();
+    }
+    return created_chapters;
   }
 }

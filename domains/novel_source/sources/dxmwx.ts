@@ -136,7 +136,7 @@ export class DXMWXSource extends NovelSourceClient {
     }
     return null;
   }
-  async fetch_chapters(novel: SearchedNovel) {
+  async fetch_chapters(novel: { id: string }) {
     const { id } = novel;
     const r = await this.client.get<string>(`https://www.dxmwx.org/chapter/${id}.html`);
     if (r.error) {
@@ -178,16 +178,9 @@ export class DXMWXSource extends NovelSourceClient {
       chapters,
     });
   }
-  async fetch_content(chapter: SearchedNovelChapter) {
+  async fetch_content(chapter: { url: string }) {
     const { url } = chapter;
-    //     const matched = url.match(/novel_id=([^&]{1,})&page=([0-9]{1,})$/);
-    //     if (!matched) {
-    //       return Result.Err(`链接 '${url}' 缺少 id 和 page`);
-    //     }
-    //     const [, id, page_num] = matched;
-    //     const url2 = `https://cn.bg3.co/novel/pagea/${id}_${page_num}.html`;
-    //     console.log("[]fetch_content - before goto url2", url);
-    console.log("fetch_content - before goto", url);
+    console.log([this.unique_id].join("/"), "fetch_content - before goto", url);
     const r = await this.client.get<string>(url);
     if (r.error) {
       return Result.Err(r.error.message);
@@ -202,7 +195,7 @@ export class DXMWXSource extends NovelSourceClient {
       }
     });
     if (!paragraphs.length) {
-      return Result.Err("没有找到 .content");
+      return Result.Err("没有找到 content");
     }
     const contents = paragraphs.map((text) => text.trim()).filter(Boolean) as string[];
     return Result.Ok(contents);

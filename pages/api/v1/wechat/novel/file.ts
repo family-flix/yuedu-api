@@ -4,8 +4,9 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { store } from "@/store/index";
+import { app, store } from "@/store/index";
 import { Member } from "@/domains/user/member";
+import { ScheduleTask } from "@/domains/schedule";
 import { ModelQuery } from "@/domains/store/types";
 import { BaseApiResp, Result } from "@/types/index";
 import { response_error_factory } from "@/utils/server";
@@ -28,16 +29,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     where: {
       id: file_id,
     },
+    include: {
+      searched_novel: {
+        include: {
+          source: true,
+        },
+      },
+    },
   });
   if (!searched_chapter) {
     return e(Result.Err("没有匹配的记录"));
+  }
+  if (!searched_chapter.content) {
+    const schedule = new ScheduleTask({
+      app,
+      store,
+    });
+    const client = schedule.find_source(searched_chapter.searched_novel.source.unique_id);
+    if (client) {
+      await schedule.fetch_chapter_content(searched_chapter, client);
+      const updated = await store.prisma.searched_chapter.findFirst({
+        where: {
+          id: searched_chapter.id,
+        },
+      });
+      Object.assign(searched_chapter, updated);
+    }
   }
   const { id, name, order, content } = searched_chapter;
   const data = {
     id,
     name,
     order,
-    content,
+    content: (() => {
+      if (!content) {
+        return "数据异常，请反馈后等待处理";
+      }
+      return content;
+    })(),
   };
   res.status(200).json({
     code: 0,

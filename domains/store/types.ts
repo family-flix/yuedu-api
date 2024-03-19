@@ -9,14 +9,24 @@ import {
   media_genre,
   media_country,
   tmp_file,
+  novel_profile,
+  novel_source,
+  novel_chapter_profile,
+  searched_chapter,
+  searched_novel,
 } from "@prisma/client";
 
+export type NovelProfileRecord = novel_profile;
+export type NovelChapterProfileRecord = novel_chapter_profile;
+export type NovelSourceRecord = novel_source;
 export type DriveRecord = drive;
 export type DriveTokenRecord = drive_token;
 export type FileRecord = file;
 export type TmpFileRecord = tmp_file;
 export type MediaGenreRecord = media_genre;
 export type MediaCountryRecord = media_country;
+export type SearchedNovelRecord = searched_novel;
+export type SearchedChapterRecord = searched_chapter;
 
 export type AsyncTaskRecord = async_task;
 export type RecordCommonPart = {
