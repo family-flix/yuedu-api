@@ -11,6 +11,7 @@ import { ScheduleTask } from "@/domains/schedule";
     root_path: OUTPUT_PATH,
   });
   const store = app.store;
+  // @ts-ignore
   BigInt.prototype.toJSON = function () {
     return Number(this);
   };
