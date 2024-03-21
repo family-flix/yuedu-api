@@ -58,9 +58,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         include: {
           _count: true,
           files: {
-            select: {
-              id: true,
-              name: true,
+            include: {
+              searched_novel: {
+                include: {
+                  source: true,
+                },
+              },
             },
           },
         },
@@ -79,10 +82,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         order,
         file_count: _count.files,
         files: files.map((file) => {
-          const { id, name } = file;
+          const { id, name, searched_novel } = file;
           return {
             id,
             name,
+            from_source: {
+              id: searched_novel.source.id,
+              name: searched_novel.source.name,
+            },
           };
         }),
       };

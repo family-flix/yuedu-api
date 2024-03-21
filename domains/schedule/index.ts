@@ -320,9 +320,9 @@ export class ScheduleTask {
             searched_novel_id: searched_novel_record.id,
           },
         });
-        if (options.include_content) {
-          await this.fetch_chapter_content(chapter, source.client);
-        }
+        // if (options.include_content) {
+        //   await this.fetch_chapter_content(chapter, source.client);
+        // }
       })();
     }
     return Result.Ok(searched_novel_record);
@@ -332,11 +332,19 @@ export class ScheduleTask {
     const r4 = await source.fetch_content(chapter);
     if (r4.error) {
       console.log(r4.error.message);
+      await this.store.prisma.searched_chapter.update({
+        where: {
+          id,
+        },
+        data: {
+          error: JSON.stringify({ text: r4.error.message }),
+        },
+      });
       return Result.Err(r4.error.message);
     }
     const content = r4.data;
     const contents = content.join("\n");
-    console.log("成功获取到章节内容，内容总字数", contents.length);
+    console.log("成功获取到章节内容，内容总字数", contents.length, id);
     await this.store.prisma.searched_chapter.update({
       where: {
         id,

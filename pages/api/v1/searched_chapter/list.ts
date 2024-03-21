@@ -82,6 +82,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           ? {
               name: chapter_profile.name,
               novel_name: chapter_profile.novel_profile.name,
+              cover_path: chapter_profile.novel_profile.cover_path,
             }
           : null,
       };

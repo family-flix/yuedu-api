@@ -5,11 +5,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import dayjs from "dayjs";
 
+import { app, store } from "@/store/index";
 import { Member } from "@/domains/user/member";
-import { BaseApiResp, Result } from "@/types";
+import { BaseApiResp, Result } from "@/types/index";
 import { response_error_factory } from "@/utils/server";
-import { app, store } from "@/store";
-import { r_id } from "@/utils";
+import { r_id } from "@/utils/index";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<BaseApiResp<unknown>>) {
   const e = response_error_factory(res);
@@ -99,6 +99,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     novel_id,
     novel_chapter_id,
     progress,
+    text: (() => {
+      const { name } = novel.novel_profile;
+      const { order } = chapter_profile;
+      return `${name}/${order}`;
+    })(),
     file_id: file.id,
     updated: dayjs().toISOString(),
   };

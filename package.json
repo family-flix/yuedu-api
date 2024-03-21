@@ -37,6 +37,7 @@
     "vitest": "^0.10.0"
   },
   "dependencies": {
+    "@lobehub/tts": "^1.24.0",
     "@panva/hkdf": "^1.1.1",
     "@peculiar/webcrypto": "^1.4.5",
     "@prisma/client": "4.16.2",
@@ -58,6 +59,7 @@
     "puppeteer": "^13.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "ws": "^8.16.0"
   }
 }

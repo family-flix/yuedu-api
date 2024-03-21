@@ -19,11 +19,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const {
     novel_id,
     name,
+    invalid = 0,
     next_marker = "",
     page_size,
   } = req.body as Partial<{
     novel_id: string;
     name: string;
+    invalid: number;
     next_marker: string;
     page_size: number;
   }>;
@@ -41,19 +43,48 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       contains: name,
     };
   }
+  if (invalid) {
+    where.files = {
+      none: {},
+    };
+  }
   const result = await store.list_with_cursor({
     fetch: (args) => {
       return store.prisma.novel_chapter_profile.findMany({
         where,
+        include: {
+          novel_profile: true,
+          _count: true,
+        },
+        orderBy: {
+          novel_profile: {
+            created: "desc",
+          },
+        },
         ...args,
       });
     },
     page_size,
     next_marker,
   });
+  const data = {
+    list: result.list.map((chapter) => {
+      const { id, name, novel_profile, _count } = chapter;
+      return {
+        id,
+        name,
+        novel: {
+          name: novel_profile.name,
+          cover_path: novel_profile.cover_path,
+        },
+        file_count: _count.files,
+      };
+    }),
+    next_marker: result.next_marker,
+  };
   res.status(200).json({
     code: 0,
     msg: "",
-    data: result,
+    data,
   });
 }

@@ -205,6 +205,7 @@ LIMIT ${page_size} OFFSET ${(page - 1) * page_size}
     const {
       chapters: novel_chapters,
       cur_chapter,
+      progress,
       prev_marker,
       next_marker,
     } = await (async () => {
@@ -234,6 +235,7 @@ LIMIT ${page_size} OFFSET ${(page - 1) * page_size}
         const first = chapters[0];
         const next_marker = chapters[chapters.length - 1].id;
         return {
+          progress: 0,
           chapters: chapters.slice(0, page_size),
           cur_chapter: first
             ? {
@@ -258,8 +260,9 @@ LIMIT ${page_size} OFFSET ${(page - 1) * page_size}
           next_marker,
         };
       }
-      const { novel_chapter } = history;
+      const { novel_chapter, progress } = history;
       const chapter_count = await this.store.prisma.novel_chapter_profile.count();
+      // 102 表示当前章节，假设前面 102 和后面 102 章节，总共 205 章
       const range = get_chapter_ranges(novel_chapter.order, { step: 102, max: chapter_count });
       const chapters = await this.store.prisma.novel_chapter_profile.findMany({
         where: {
@@ -292,6 +295,7 @@ LIMIT ${page_size} OFFSET ${(page - 1) * page_size}
       // 同理，如果当前看的是最后一章，就不能获取之后的章节（一般都是当前章就是最后章）
       const next_marker = last.id === novel_chapter.id ? null : last.id;
       return {
+        progress,
         chapters: chapters.slice(1, chapters.length - 1),
         cur_chapter: {
           id: novel_chapter.id,
@@ -320,6 +324,7 @@ LIMIT ${page_size} OFFSET ${(page - 1) * page_size}
       name,
       overview,
       cur_chapter,
+      progress,
       chapters: novel_chapters.map((chapter) => {
         const { id, name, order, files } = chapter;
         return {
