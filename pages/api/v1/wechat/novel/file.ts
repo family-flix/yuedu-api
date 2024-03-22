@@ -1,6 +1,7 @@
 /**
  * @file 获取指定小说的章节内容
  */
+import fs from "fs";
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -40,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   if (!searched_chapter) {
     return e(Result.Err("没有匹配的记录"));
   }
-  if (!searched_chapter.content) {
+  if (!searched_chapter.content_filepath) {
     const schedule = new ScheduleTask({
       app,
       store,
@@ -56,16 +57,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       Object.assign(searched_chapter, updated);
     }
   }
-  const { id, name, order, content } = searched_chapter;
+  const { id, name, order, content_filepath } = searched_chapter;
   const data = {
     id,
     name,
     order,
     content: (() => {
-      if (!content) {
+      if (!content_filepath) {
         return "数据异常，请反馈后等待处理";
       }
-      return content;
+      if (content_filepath.startsWith("/")) {
+        return fs.readFileSync(content_filepath);
+      }
+      return content_filepath;
     })(),
   };
   res.status(200).json({

@@ -1,5 +1,6 @@
 /**
  * 遍历更新中的小说，使用书源获取小说正文
+ * @deprecated
  */
 import dayjs from "dayjs";
 
@@ -133,7 +134,7 @@ async function main() {
                   name: chapter.name,
                   url: chapter.url,
                   order: episode ? num : i,
-                  content: contents,
+                  content_filepath: contents,
                   searched_novel_id: searched_novel_record.id,
                 },
               });

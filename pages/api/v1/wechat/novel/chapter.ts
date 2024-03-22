@@ -53,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
   const { id, name, order, files } = chapter_profile;
   const matched = files.find((f) => f.id === file_id);
-  if (matched && !matched.content) {
+  if (matched && !matched.content_filepath) {
     const schedule = new ScheduleTask({
       app,
       store,
@@ -77,10 +77,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     name,
     order,
     files: files.map((file) => {
-      const { name, content } = file;
+      const { name, content_filepath } = file;
       return {
         name,
-        content,
+        content: content_filepath,
       };
     }),
   };

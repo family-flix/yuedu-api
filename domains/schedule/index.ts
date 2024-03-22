@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import dayjs from "dayjs";
 
 import { Application } from "@/domains/application";
@@ -20,7 +22,7 @@ import { r_id } from "@/utils/index";
 import { get_episode_num, parse_name_of_chapter } from "@/utils/parse_name_of_chapter";
 import { match_chapter } from "@/utils/match_chapter";
 import { Result } from "@/types/index";
-import { SearchedNovelChapterProfile } from "../novel_profile/types";
+import { ensure } from "@/utils/fs";
 
 export class ScheduleTask {
   profile_client: QidianClient;
@@ -145,7 +147,7 @@ export class ScheduleTask {
               });
             },
             handler: async (chapter) => {
-              if (!options.force && chapter.content) {
+              if (!options.force && chapter.content_filepath) {
                 return;
               }
               await this.fetch_chapter_content(chapter, client);
@@ -328,7 +330,7 @@ export class ScheduleTask {
     return Result.Ok(searched_novel_record);
   }
   async fetch_chapter_content(chapter: { id: string; url: string }, source: NovelSourceClient) {
-    const { id } = chapter;
+    const { id, url } = chapter;
     const r4 = await source.fetch_content(chapter);
     if (r4.error) {
       console.log(r4.error.message);
@@ -344,13 +346,30 @@ export class ScheduleTask {
     }
     const content = r4.data;
     const contents = content.join("\n");
+    const profile = await this.store.prisma.searched_chapter.findFirst({
+      where: {
+        url,
+      },
+      include: {
+        searched_novel: true,
+      },
+    });
     console.log("成功获取到章节内容，内容总字数", contents.length, id);
+    const storage_filepath = this.app.assets;
+    const chapter_filepath = (() => {
+      if (profile) {
+        return path.join(storage_filepath, profile.searched_novel.name, `${profile.name.replace(/ /, "_")}.txt`);
+      }
+      return path.join("chapters", `${r_id()}.txt`);
+    })();
+    await ensure(chapter_filepath);
+    fs.writeFileSync(chapter_filepath, contents);
     await this.store.prisma.searched_chapter.update({
       where: {
         id,
       },
       data: {
-        content: contents,
+        content_filepath: chapter_filepath,
       },
     });
     return Result.Ok(contents);
