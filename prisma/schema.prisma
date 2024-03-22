@@ -103,12 +103,12 @@ model searched_chapter {
         created DateTime @default(now())
         updated DateTime @default(now())
 
-        unique_id String
-        name      String
-        url       String
-        order     Int
-        content   String?
-        error     String?
+        unique_id        String
+        name             String
+        url              String
+        order            Int
+        content_filepath String?
+        error            String?
 
         searched_novel_id  String
         searched_novel     searched_novel         @relation(fields: [searched_novel_id], references: [id])

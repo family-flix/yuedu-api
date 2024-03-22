@@ -13,56 +13,120 @@ export function match_chapter<T extends { id: string; name: string; order: numbe
     }
     // console.log(...args);
   }
-  const chapter_name = name
-    .replace(/,/g, "，")
-    .replace(/:/g, "：")
-    .replace(/;/g, "；")
-    .replace(/\(/, "（")
-    .replace(/\)/, "）");
+  function normalize_char(name: string) {
+    return name
+      .replace(/,/g, "，")
+      .replace(/:/g, "：")
+      .replace(/;/g, "；")
+      .replace(/!/g, "！")
+      .replace(/\(/, "（")
+      .replace(/\)/, "）");
+  }
+  function remove_char(name: string) {
+    return name
+      .replace(/,/g, "")
+      .replace(/:/g, "")
+      .replace(/;/g, "")
+      .replace(/\(/, "")
+      .replace(/\)/, "")
+      .replace(/!/, "");
+  }
+  const chapter_name1 = normalize_char(name);
+  const chapter_name2 = remove_char(name);
   const parsed = format_chapter_name(name);
-  const processed_chapters = chapters.map((c) => {
+  const processed_chapters = chapters.map((chapter) => {
+    const { id, order, name } = chapter;
+    const { order: parsed_order, name: parsed_name } = format_chapter_name(name);
     return {
-      ...c,
-      name: c.name.replace(/,/g, "，").replace(/:/g, "：").replace(/;/g, "；").replace(/\(/, "（").replace(/\)/, "）"),
+      id,
+      name,
+      order,
+      parsed_order,
+      parsed_name,
+      name1: normalize_char(name),
+      name2: remove_char(name),
     };
   });
   const matched = (() => {
     let a = processed_chapters.find((chapter) => {
       return chapter.name === name;
     });
-    log("1", a);
+    log("chapter.name === name", a);
     if (a) {
       return a;
     }
     a = processed_chapters.find((chapter) => {
-      return chapter.name === chapter_name;
+      return chapter.name === chapter_name1;
     });
-    log("2", a);
+    log("chapter.name === chapter_name1", a);
+    if (a) {
+      return a;
+    }
+    a = processed_chapters.find((chapter) => {
+      return chapter.name === chapter_name2;
+    });
+    log("chapter.name === chapter_name2", a);
+    if (a) {
+      return a;
+    }
+    a = processed_chapters.find((chapter) => {
+      return chapter.name1 === chapter_name1;
+    });
+    log("chapter.name1 === chapter_name1", a);
+    if (a) {
+      return a;
+    }
+    a = processed_chapters.find((chapter) => {
+      return chapter.name2 === chapter_name1;
+    });
+    log("chapter.name2 === chapter_name1", a);
+    if (a) {
+      return a;
+    }
+    a = processed_chapters.find((chapter) => {
+      return chapter.name1 === chapter_name2;
+    });
+    log("chapter.name1 === chapter_name2", a);
+    if (a) {
+      return a;
+    }
+    a = processed_chapters.find((chapter) => {
+      return chapter.name2 === chapter_name2;
+    });
+    log("chapter.name2 === chapter_name2", a);
+    if (a) {
+      return a;
+    }
+    a = processed_chapters.find((chapter) => {
+      return chapter.parsed_order === parsed.order && chapter.parsed_name === parsed.name;
+    });
+    log("chapter.name2 === chapter_name2", a);
     if (a) {
       return a;
     }
     a = processed_chapters.find((chapter) => {
       return chapter.name.includes(parsed.name);
     });
-    log("3", a);
+    log("chapter.name.includes(parsed.name)", a);
     if (a) {
       return a;
     }
     a = processed_chapters.find((chapter) => {
-      return chapter.name.includes(chapter_name);
+      return chapter.name.includes(chapter_name1);
     });
-    log("4", a);
+    log("chapter.name.includes(chapter_name1)", a);
+    if (a) {
+      return a;
+    }
+    a = processed_chapters.find((chapter) => {
+      return chapter.name.includes(chapter_name2);
+    });
+    log("chapter.name.includes(chapter_name2)", a);
     if (a) {
       return a;
     }
     // 只能靠名字匹配，order 完全是乱的，包括从文件名解析得到的 第n章。
     // 因为小说可以分多个篇，每个篇开始，章节数又从 1 开始
-    // a = chapters.find((chapter) => {
-    //   return chapter.order === parsed.order;
-    // });
-    // if (a) {
-    //   return a;
-    // }
     return null;
   })();
   if (!matched) {
@@ -72,7 +136,7 @@ export function match_chapter<T extends { id: string; name: string; order: numbe
     });
   }
   // const chapter = get_novel_chapter(matched);
-  return Result.Ok(matched);
+  return Result.Ok(matched as any as T);
 }
 
 function format_chapter_name(name: string) {

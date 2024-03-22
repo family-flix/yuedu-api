@@ -19,13 +19,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const {
     novel_id,
     name,
-    invalid = 0,
+    invalid_chapter = 0,
     next_marker = "",
     page_size,
   } = req.body as Partial<{
     novel_id: string;
     name: string;
-    invalid: number;
+    invalid_chapter: number;
     next_marker: string;
     page_size: number;
   }>;
@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       contains: name,
     };
   }
-  if (invalid) {
+  if (invalid_chapter) {
     where.files = {
       none: {},
     };
@@ -53,8 +53,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       return store.prisma.novel_chapter_profile.findMany({
         where,
         include: {
-          novel_profile: true,
-          _count: true,
+          files: {
+            orderBy: {
+              searched_novel: {
+                source_id: "desc",
+              },
+            },
+          },
         },
         orderBy: {
           novel_profile: {
@@ -69,15 +74,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   });
   const data = {
     list: result.list.map((chapter) => {
-      const { id, name, novel_profile, _count } = chapter;
+      const { id, name, files } = chapter;
       return {
         id,
         name,
-        novel: {
-          name: novel_profile.name,
-          cover_path: novel_profile.cover_path,
-        },
-        file_count: _count.files,
+        files,
       };
     }),
     next_marker: result.next_marker,
