@@ -62,7 +62,7 @@ LEFT JOIN (
 JOIN PlayHistory ON PlayHistory.novel_id = Novel.id
 WHERE PlayHistory.updated < LatestChapter.created AND PlayHistory.member_id = ${member.id}
 ORDER BY LatestChapter.created DESC
-LIMIT 10
+LIMIT ${page_size}
   `;
   res.status(200).json({
     code: 0,
