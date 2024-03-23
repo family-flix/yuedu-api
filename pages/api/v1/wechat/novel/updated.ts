@@ -32,12 +32,14 @@ SELECT
   Novel.id AS id,
   LatestChapter.chapter_name AS latest_chapter_name,
   LatestChapter.novel_name AS name,
+  LatestChapter.cover_path AS cover_path,
   LatestChapter.created AS created_at
 FROM Novel
 LEFT JOIN (
   SELECT
     NovelProfile.id AS novel_id,
     NovelProfile.name AS novel_name,
+    NovelProfile.cover_path AS cover_path,
     ChapterWithFiles.chapter_profile_name AS chapter_name,
     MAX(ChapterWithFiles.chapter_order) AS chapter_order,
     ChapterWithFiles.created AS created
