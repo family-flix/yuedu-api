@@ -56,7 +56,7 @@ export function match_chapter<T extends { id: string; name: string; order: numbe
       name2: remove_char(name),
     };
   });
-  console.log("chapters", processed_chapters);
+  log("chapters", processed_chapters);
   const matched = (() => {
     let a = processed_chapters.find((chapter) => {
       return chapter.name === name;

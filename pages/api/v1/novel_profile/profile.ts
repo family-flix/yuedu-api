@@ -71,7 +71,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       order: "asc",
     },
   });
-  const next_marker = chapters[chapters.length - 1].id;
+  const next_marker = (() => {
+    if (chapters.length <= page_size) {
+      return null;
+    }
+    return chapters[chapters.length - 1].id;
+  })();
   const { id, name, overview, cover_path, author } = r;
   const data = {
     id,

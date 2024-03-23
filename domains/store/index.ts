@@ -34,12 +34,11 @@ export class DatabaseStore implements DataStore {
   }
   get_next_marker<T extends { id: string }>(list: T[], body: { page_size: number }) {
     const { page_size = 20 } = body;
-    let new_next_marker = null;
-    if (list.length === page_size + 1) {
-      const last_record = list[list.length - 1];
-      new_next_marker = last_record.id;
+    if (list.length <= page_size) {
+      return null;
     }
-    return new_next_marker;
+    const last_record = list[list.length - 1];
+    return last_record.id;
   }
   async list_with_cursor<F extends (extra: { take: number }) => any>(options: {
     fetch: F;
