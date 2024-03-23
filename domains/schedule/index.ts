@@ -127,34 +127,34 @@ export class ScheduleTask {
           });
         },
         handler: async (novel) => {
-          await this.search_novel_by_novel_sources({ novel, user, novel_sources }, { include_content: true });
+          await this.search_novel_by_novel_sources({ novel, user, novel_sources });
         },
       });
       // await this.match_searched_chapter();
-      await this.walk_with_source({
-        default_sources: novel_sources,
-        user,
-        handler: async ({ id, client }) => {
-          await walk_model_with_cursor({
-            fn: (extra) => {
-              return this.store.prisma.searched_chapter.findMany({
-                where: {
-                  searched_novel: {
-                    source_id: id,
-                  },
-                },
-                ...extra,
-              });
-            },
-            handler: async (chapter) => {
-              if (!options.force && chapter.content_filepath) {
-                return;
-              }
-              await this.fetch_chapter_content(chapter, client);
-            },
-          });
-        },
-      });
+      // await this.walk_with_source({
+      //   default_sources: novel_sources,
+      //   user,
+      //   handler: async ({ id, client }) => {
+      //     await walk_model_with_cursor({
+      //       fn: (extra) => {
+      //         return this.store.prisma.searched_chapter.findMany({
+      //           where: {
+      //             searched_novel: {
+      //               source_id: id,
+      //             },
+      //           },
+      //           ...extra,
+      //         });
+      //       },
+      //       handler: async (chapter) => {
+      //         if (!options.force && chapter.content_filepath) {
+      //           return;
+      //         }
+      //         await this.fetch_chapter_content(chapter, client);
+      //       },
+      //     });
+      //   },
+      // });
     });
     return Result.Ok(null);
   }

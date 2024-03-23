@@ -67,7 +67,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         return "数据异常，请反馈后等待处理";
       }
       if (content_filepath.startsWith("/")) {
-        return fs.readFileSync(content_filepath);
+        return fs.readFileSync(content_filepath, 'utf-8');
       }
       return content_filepath;
     })(),

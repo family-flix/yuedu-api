@@ -67,10 +67,65 @@ import { PushClientTypes } from "@/domains/push_client/constants";
   //   true,
   //   "Asia/Shanghai"
   // );
+  // new CronJob.CronJob(
+  //   "0 50 8-23 * * *",
+  //   async () => {
+  //     console.log("执行任务 at 0 50 8-23 * * *", dayjs().format("YYYY/MM/DD HH:mm:ss"));
+  //   },
+  //   null,
+  //   true,
+  //   "Asia/Shanghai"
+  // );
+  // new CronJob.CronJob(
+  //   "0 50 8-23 * * *",
+  //   async () => {
+  //     console.log("执行任务 at 0 50 8-23 * * *", dayjs().format("YYYY/MM/DD HH:mm:ss"));
+  //   },
+  //   null,
+  //   true,
+  //   "Asia/Shanghai"
+  // );
+  // new CronJob.CronJob(
+  //   "0 0 8 * * *",
+  //   async () => {
+  //     console.log("执行任务 at 0 0 8 * * *", dayjs().format("YYYY/MM/DD HH:mm:ss"));
+  //   },
+  //   null,
+  //   true,
+  //   "Asia/Shanghai"
+  // );
+  // 0秒0分8时（每天8点时）执行一次
+  // new CronJob.CronJob(
+  //   "0 0 20 * * *",
+  //   async () => {
+  //     console.log("执行任务 at 0 0 20 * * *", dayjs().format("YYYY/MM/DD HH:mm:ss"));
+  //   },
+  //   null,
+  //   true,
+  //   "Asia/Shanghai"
+  // );
+  // new CronJob.CronJob(
+  //   "0 30 23 * * *",
+  //   async () => {
+  //     console.log("执行任务 at 0 0 23 * * *", dayjs().format("YYYY/MM/DD HH:mm:ss"));
+  //   },
+  //   null,
+  //   true,
+  //   "Asia/Shanghai"
+  // );
+  // new CronJob.CronJob(
+  //   "0 0 2 * * *",
+  //   async () => {
+  //     console.log("执行任务 at 0 0 2 * * *", dayjs().format("YYYY/MM/DD HH:mm:ss"));
+  //   },
+  //   null,
+  //   true,
+  //   "Asia/Shanghai"
+  // );
   new CronJob.CronJob(
-    "0 50 8-23 * * *",
+    "0 0 3 * * *",
     async () => {
-      console.log("执行任务 at 0 50 8-23 * * *", dayjs().format("YYYY/MM/DD HH:mm:ss"));
+      console.log("执行任务 at 0 0 3 * * *", dayjs().format("YYYY/MM/DD HH:mm:ss"));
       await schedule.refresh_novel_profiles();
       await schedule.search_novels();
       const r = await schedule.match_searched_chapter();
@@ -84,66 +139,6 @@ import { PushClientTypes } from "@/domains/push_client/constants";
       push.send({
         markdown: tip,
       });
-    },
-    null,
-    true,
-    "Asia/Shanghai"
-  );
-  // new CronJob.CronJob(
-  //   "0 50 8-23 * * *",
-  //   async () => {
-  //     console.log("执行任务 at 0 50 8-23 * * *", dayjs().format("YYYY/MM/DD HH:mm:ss"));
-  //   },
-  //   null,
-  //   true,
-  //   "Asia/Shanghai"
-  // );
-  new CronJob.CronJob(
-    "0 0 8 * * *",
-    async () => {
-      console.log("执行任务 at 0 0 8 * * *", dayjs().format("YYYY/MM/DD HH:mm:ss"));
-    },
-    null,
-    true,
-    "Asia/Shanghai"
-  );
-  // 0秒0分8时（每天8点时）执行一次
-  new CronJob.CronJob(
-    "0 0 20 * * *",
-    async () => {
-      console.log("执行任务 at 0 0 20 * * *", dayjs().format("YYYY/MM/DD HH:mm:ss"));
-    },
-    null,
-    true,
-    "Asia/Shanghai"
-  );
-  new CronJob.CronJob(
-    "0 30 23 * * *",
-    async () => {
-      console.log("执行任务 at 0 0 23 * * *", dayjs().format("YYYY/MM/DD HH:mm:ss"));
-      // await schedule.archive_daily_update_collection();
-      // notice_push_deer({
-      //   title: "归档",
-      //   markdown: "归档了当天更新",
-      // });
-    },
-    null,
-    true,
-    "Asia/Shanghai"
-  );
-  new CronJob.CronJob(
-    "0 0 2 * * *",
-    async () => {
-      console.log("执行任务 at 0 0 2 * * *", dayjs().format("YYYY/MM/DD HH:mm:ss"));
-    },
-    null,
-    true,
-    "Asia/Shanghai"
-  );
-  new CronJob.CronJob(
-    "0 0 3 * * *",
-    async () => {
-      console.log("执行任务 at 0 0 3 * * *", dayjs().format("YYYY/MM/DD HH:mm:ss"));
     },
     null,
     true,
