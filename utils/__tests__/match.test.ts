@@ -26,7 +26,6 @@ describe("特殊的集数", () => {
       order: 310,
     });
   });
-
   test("第二百六十七章 接亲(下)", () => {
     const name = "第二百六十七章 接亲(下)";
     const r = match_chapter({ id: "310", name }, [
@@ -38,6 +37,34 @@ describe("特殊的集数", () => {
     ]);
     expect(r.data).toStrictEqual({
       chapter_profile_name: "接亲（下）",
+    });
+  });
+  test("第48章 Alpha0.3版本上线新玩法解锁", () => {
+    const name = "第48章 Alpha0.3版本上线新玩法解锁";
+    const r = match_chapter({ id: "310", name }, [
+      {
+        id: "48",
+        name: "第48章 Alpha0.3版本上线！新玩法解锁！",
+        order: 48,
+      },
+    ]);
+    expect(r.data).toStrictEqual({
+      id: "48",
+      name: "第48章 Alpha0.3版本上线！新玩法解锁！",
+      order: 48,
+    });
+  });
+  test("第65章 第65章 alpha0.4版本更新夜间系统上线", () => {
+    const name = "第65章 ";
+    const r = match_chapter({ id: "310", name }, [
+      {
+        id: "65",
+        name: "第65章 alpha0.4版本更新！夜间系统上线！（3/4）",
+        order: 65,
+      },
+    ]);
+    expect(r.data).toStrictEqual({
+      chapter_profile_name: "第48章 Alpha0.3版本上线！新玩法解锁！",
     });
   });
 });

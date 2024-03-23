@@ -1,5 +1,6 @@
 import { Application } from "@/domains/application";
 import { ScheduleTask } from "@/domains/schedule";
+import { parse_argv } from "@/utils/server";
 
 (async () => {
   const OUTPUT_PATH = process.env.OUTPUT_PATH;
@@ -12,6 +13,7 @@ import { ScheduleTask } from "@/domains/schedule";
   });
   const store = app.store;
   const schedule = new ScheduleTask({ app, store });
-  await schedule.match_searched_chapter({ force: true });
+  const options = parse_argv(process.argv.slice(2));
+  await schedule.match_searched_chapter({ force: !!options.force });
   console.log("Completed");
 })();
