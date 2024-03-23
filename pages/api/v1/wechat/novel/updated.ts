@@ -66,7 +66,16 @@ LIMIT 10
     code: 0,
     msg: "",
     data: {
-      list: r,
+      list: r.map((novel) => {
+        const { id, name, cover_path, latest_chapter_name, created_at } = novel;
+        return {
+          id,
+          name,
+          cover_path,
+          latest_chapter_name,
+          created_at: Number(created_at),
+        };
+      }),
       next_marker: null,
     },
   });
