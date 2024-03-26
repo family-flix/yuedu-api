@@ -19,11 +19,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const {
     searched_novel_id,
     name,
+    novel_name,
     next_marker = "",
     page_size,
   } = req.body as Partial<{
     searched_novel_id: string;
     name: string;
+    novel_name: string;
     next_marker: string;
     page_size: number;
   }>;
@@ -40,6 +42,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
   if (searched_novel_id) {
     where.searched_novel_id = searched_novel_id;
+  }
+  if (novel_name) {
+    where.searched_novel = {
+      name: {
+        contains: novel_name,
+      },
+    };
   }
   const result = await store.list_with_cursor({
     fetch: (args) => {
@@ -69,11 +78,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const data = {
     next_marker: result.next_marker,
     list: result.list.map((searched) => {
-      const { id, name, url, chapter_profile, searched_novel } = searched;
+      const { id, name, url, order, chapter_profile, searched_novel } = searched;
       return {
         id,
         name,
         url,
+        order,
         searched_novel: {
           name: searched_novel.name,
           source_name: searched_novel.source.name,

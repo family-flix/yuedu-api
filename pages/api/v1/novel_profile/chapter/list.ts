@@ -65,6 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           novel_profile: {
             created: "desc",
           },
+          created: "desc",
         },
         ...args,
       });

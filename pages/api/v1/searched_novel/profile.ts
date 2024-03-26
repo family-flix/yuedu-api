@@ -16,8 +16,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const e = response_error_factory(res);
 
   const { authorization } = req.headers;
-  const { searched_novel_id } = req.body as Partial<{
+  const { searched_novel_id, page_size = 100 } = req.body as Partial<{
     searched_novel_id: string;
+    page_size: number;
   }>;
   const t_res = await User.New(authorization, store);
   if (t_res.error) {
@@ -27,7 +28,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const where: ModelQuery<"searched_novel"> = {
     id: searched_novel_id,
   };
-  const page_size = 100;
   const args = await store.build_extra_args({ page_size });
   const r = await store.prisma.searched_novel.findFirst({
     where,
@@ -71,10 +71,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     chapter: {
       next_marker: store.get_next_marker(chapters, { page_size }),
       list: chapters.slice(0, page_size).map((chapter) => {
-        const { id, name, chapter_profile } = chapter;
+        const { id, name, url, order, chapter_profile } = chapter;
         return {
           id,
           name,
+          url,
+          order,
+          searched_novel: {
+            name,
+            source_name: source.name,
+          },
           profile: chapter_profile
             ? {
                 name: chapter_profile.name,

@@ -60,7 +60,7 @@ LEFT JOIN (
   GROUP BY NovelProfile.id
 ) LatestChapter ON Novel.novel_profile_id = LatestChapter.novel_id
 JOIN PlayHistory ON PlayHistory.novel_id = Novel.id
-WHERE PlayHistory.updated < LatestChapter.created AND PlayHistory.member_id = ${member.id}
+WHERE PlayHistory.updated < LatestChapter.created AND PlayHistory.member_id = ${member.id} AND PlayHistory.updated > ((strftime('%s', 'now') * 1000) - (60 * 60 * 24 * 7 * 1000))
 ORDER BY LatestChapter.created DESC
 LIMIT ${page_size}
   `;

@@ -16,19 +16,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const e = response_error_factory(res);
 
   const { authorization } = req.headers;
-  const { next_marker = "", page_size } = req.body as Partial<{
+  const {
+    name,
+    next_marker = "",
+    page_size,
+  } = req.body as Partial<{
+    name: string;
     next_marker: string;
     page_size: number;
   }>;
-
   const t_res = await User.New(authorization, store);
   if (t_res.error) {
     return e(t_res);
   }
-
   const user = t_res.data;
   const where: ModelQuery<"searched_novel"> = {};
-
+  if (name) {
+    where.name = {
+      contains: name,
+    };
+  }
   const result = await store.list_with_cursor({
     fetch: (args) => {
       return store.prisma.searched_novel.findMany({
