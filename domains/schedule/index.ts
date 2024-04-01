@@ -192,11 +192,16 @@ export class ScheduleTask {
           return;
         }
         const client = new Client({ unique_id: novel_source.unique_id });
-        await this.search_novel_by_novel_source(
+        const r1 = await this.search_novel_by_novel_source(
           novel,
           { id: novel_source.id, name: novel_source.name, client },
           options
         );
+        if (r1.error) {
+          return;
+        }
+        const searched_novel = r1.data;
+        await this.match_chapters_of_searched_novel(searched_novel);
       })();
     }
     const searched_novels = await this.store.prisma.searched_novel.findMany({
@@ -270,6 +275,14 @@ export class ScheduleTask {
           unique_id: searched_novel.id,
           source_id: source.id,
         },
+        include: {
+          profile: {
+            include: {
+              novel_chapter_profiles: true,
+            },
+          },
+          chapters: true,
+        },
       });
       if (existing) {
         return existing;
@@ -282,6 +295,14 @@ export class ScheduleTask {
           url: searched_novel.url,
           profile_id: novel.id,
           source_id: source.id,
+        },
+        include: {
+          profile: {
+            include: {
+              novel_chapter_profiles: true,
+            },
+          },
+          chapters: true,
         },
       });
       return created;
@@ -453,7 +474,8 @@ export class ScheduleTask {
         chapter_name: string;
       }[]
     > = {};
-    console.log(`处理搜索到的小说 '${searched_novel.name}' 章节`);
+    // console.log(`处理搜索到的小说 '${searched_novel.name}' 章节`);
+    this.on_print(Article.build_line(["匹配章节详情"]));
     for (let j = 0; j < searched_chapters.length; j += 1) {
       const searched_chapter = searched_chapters[j];
       const { id, name } = searched_chapter;
@@ -463,9 +485,10 @@ export class ScheduleTask {
         if (!options.force && searched_chapter.chapter_profile_id) {
           return;
         }
-        console.log(`${j + 1}、`, name);
+        this.on_print(Article.build_line([`${j + 1}、`, name]));
         const r = match_chapter(searched_chapter, chapters);
         if (r.error) {
+          this.on_print(Article.build_line(["没有匹配到章节详情", r.error.message]));
           await this.store.prisma.searched_chapter.update({
             where: { id },
             data: {
