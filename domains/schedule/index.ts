@@ -14,6 +14,7 @@ import {
 } from "@/domains/store/types";
 import { QidianClient } from "@/domains/novel_profile/qidian";
 import { NovelProfileClient } from "@/domains/novel_profile";
+import { Article, ArticleLineNode, ArticleSectionNode } from "@/domains/article";
 import { Administrator } from "@/domains/user/administrator";
 import { NovelSourceClientMap } from "@/domains/novel_source";
 import { NovelSourceClient, SearchedNovelChapter } from "@/domains/novel_source/types";
@@ -29,11 +30,17 @@ export class ScheduleTask {
   novel_profile: NovelProfileClient;
   store: DataStore;
   app: Application;
+  on_print: (node: ArticleLineNode | ArticleSectionNode) => void;
 
-  constructor(props: { app: Application; store: DataStore }) {
-    const { app, store } = props;
+  constructor(props: {
+    app: Application;
+    store: DataStore;
+    on_print?: (node: ArticleLineNode | ArticleSectionNode) => void;
+  }) {
+    const { app, store, on_print = () => {} } = props;
     this.app = app;
     this.store = store;
+    this.on_print = on_print;
 
     const profile_client = new QidianClient();
     this.profile_client = profile_client;
@@ -185,8 +192,11 @@ export class ScheduleTask {
           return;
         }
         const client = new Client({ unique_id: novel_source.unique_id });
-        console.log("search_novel_by_novel_source", novel_source.name);
-        await this.search_novel_by_novel_source(novel, { id: novel_source.id, client }, options);
+        await this.search_novel_by_novel_source(
+          novel,
+          { id: novel_source.id, name: novel_source.name, client },
+          options
+        );
       })();
     }
     const searched_novels = await this.store.prisma.searched_novel.findMany({
@@ -243,11 +253,14 @@ export class ScheduleTask {
   /** 使用书源搜索指定书籍 */
   async search_novel_by_novel_source(
     novel: { id: string; name: string },
-    source: { id: string; client: NovelSourceClient },
+    source: { id: string; name: string; client: NovelSourceClient },
     options: Partial<{ include_content: boolean }> = {}
   ) {
+    this.on_print(Article.build_line([" ---- "]));
+    this.on_print(Article.build_line(["使用书源", `「${source.name}」`, "搜索", `「${novel.name}」`]));
     const r2 = await source.client.search(novel.name);
     if (r2.error) {
+      this.on_print(Article.build_line(["搜索失败，因为", r2.error.message]));
       return Result.Err(r2.error.message);
     }
     const searched_novel = r2.data;
@@ -273,6 +286,7 @@ export class ScheduleTask {
       });
       return created;
     })();
+    this.on_print(Article.build_line(["搜索成功，开始获取章节列表"]));
     // @todo 记录章节总数，下次 run 时比较总数，如果相同，直接忽略，避免了遍历几千条数据对比
     const r3 = await source.client.fetch_chapters(searched_novel);
     if (r3.error) {
@@ -283,12 +297,14 @@ export class ScheduleTask {
       where: { searched_novel_id: searched_novel.id },
     });
     if (chapter_count === chapters.length) {
+      this.on_print(Article.build_line([`没有新增章节`]));
       return Result.Err("没有新增章节");
     }
     if (chapters.length === 0) {
+      this.on_print(Article.build_line([`暂无章节`]));
       return Result.Err("暂无章节");
     }
-    console.log(`'${searched_novel.name}' 共 ${chapters.length} 章节`);
+    this.on_print(Article.build_line([`搜索到`, `共 ${chapters.length} 章节`]));
     await this.store.prisma.searched_novel.update({
       where: {
         id: searched_novel_record.id,
@@ -306,12 +322,13 @@ export class ScheduleTask {
           },
         });
         if (existing) {
-          console.log(`'${searched_novel.name}' - ${chapter.name} 章节 已存在`, { id: chapter.id });
+          // console.log(`'${searched_novel.name}' - ${chapter.name} 章节 已存在`, { id: chapter.id });
           // 已经存在就忽略，另外有地方主动刷新章节
           return;
         }
         const { episode } = parse_name_of_chapter(chapter.name);
         const num = get_episode_num(episode);
+        this.on_print(Article.build_line([`新增章节`, `${chapter.name}`]));
         await this.store.prisma.searched_chapter.create({
           data: {
             id: r_id(),
@@ -322,11 +339,9 @@ export class ScheduleTask {
             searched_novel_id: searched_novel_record.id,
           },
         });
-        // if (options.include_content) {
-        //   await this.fetch_chapter_content(chapter, source.client);
-        // }
       })();
     }
+    this.on_print(Article.build_line(["完成", `「${novel.name}」`, "使用书源", `「${source.name}」搜索`]));
     return Result.Ok(searched_novel_record);
   }
   async fetch_chapter_content(chapter: { id: string; url: string }, source: NovelSourceClient) {
