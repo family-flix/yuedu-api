@@ -55,7 +55,7 @@ export class Bg3Source extends NovelSourceClient {
 
     this.unique_id = unique_id;
     this.browser = browser;
-    this.client = new HttpClientCore();
+    this.client = new HttpClientCore({});
     connect(this.client);
   }
 

@@ -184,7 +184,7 @@ export function is_video_file(filename: string) {
 }
 
 /** 不带 ? */
-export function query_stringify(query: Record<string, string | number | undefined | null>) {
+export function query_stringify(query: Record<string, string | number | boolean | undefined | null>) {
   return Object.keys(query)
     .filter((key) => {
       return query[key] !== undefined && query[key] !== null;
