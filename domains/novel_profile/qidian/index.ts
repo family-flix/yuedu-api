@@ -57,6 +57,7 @@ export class QidianClient {
     }
     // 内容提取
     const html = r.data;
+    console.log(html);
     // writeFile(path.resolve(__dirname, "./mock/qidian/search1.html"), html);
     const regexp1 = /type="application\/json">(\{"pageContext":[^<]{1,})<\//;
     // const dataSource = m(html)(extract.search.data_source, "g");

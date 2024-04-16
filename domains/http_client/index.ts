@@ -16,13 +16,13 @@ type HttpClientCoreProps = {
 type HttpClientCoreState = {};
 
 export class HttpClientCore extends BaseDomain<TheTypesOfEvents> {
-  hostname?: string;
+  hostname: string = "";
   headers: Record<string, string> = {};
 
   constructor(props: Partial<{ _name: string }> & HttpClientCoreProps) {
     super(props);
 
-    const { hostname, headers = {} } = props;
+    const { hostname = "", headers = {} } = props;
 
     this.hostname = hostname;
     this.headers = headers;

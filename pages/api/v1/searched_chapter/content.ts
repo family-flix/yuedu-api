@@ -6,9 +6,10 @@ import fs from "fs";
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { store } from "@/store/index";
+import { app, store } from "@/store/index";
 import { User } from "@/domains/user/index";
 import { ModelQuery } from "@/domains/store/types";
+import { ScheduleTask } from "@/domains/schedule";
 import { BaseApiResp, Result } from "@/types/index";
 import { response_error_factory } from "@/utils/server";
 
@@ -29,11 +30,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   };
   const searched_chapter = await store.prisma.searched_chapter.findFirst({
     where,
+    include: {
+      searched_novel: {
+        include: {
+          source: true,
+        },
+      },
+    },
   });
   if (!searched_chapter) {
     return e(Result.Err("没有匹配的记录"));
   }
+  if (!searched_chapter.content_filepath) {
+    const schedule = new ScheduleTask({
+      app,
+      store,
+    });
+    const client = schedule.find_source(searched_chapter.searched_novel.source.unique_id);
+    if (client) {
+      await schedule.fetch_chapter_content(searched_chapter, client);
+      const updated = await store.prisma.searched_chapter.findFirst({
+        where: {
+          id: searched_chapter.id,
+        },
+      });
+      Object.assign(searched_chapter, updated);
+    }
+  }
   const { id, name, order, content_filepath } = searched_chapter;
+  // console.log(searched_chapter);
   const data = {
     id,
     name,
