@@ -8,4 +8,5 @@ export const NovelSourceClientMap: Record<string, new (props: { unique_id: strin
   mingzw: MingZWSource,
   dxmwx: DXMWXSource,
   biqu520: Biqu520Source,
+  // https://www.69shuba.pro/
 };
